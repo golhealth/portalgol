@@ -1,0 +1,730 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Registo de Árbitro | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        display: ["Lexend", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .sidebar-item-active {
+            background-color: #e7edf3;
+            border-radius: 0.5rem;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #137fec !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar igual ao dashboard principal (com Árbitros ativo) -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-64 flex flex-col">
+        <!-- Header igual ao dashboard principal -->
+            {% include "core/partials/app_header.html" %}
+
+        <div class="max-w-5xl w-full mx-auto p-8">
+            <!-- Breadcrumbs -->
+            <nav class="flex items-center gap-2 mb-6 text-sm">
+                <a href="{% url 'core:dashboard' %}" class="text-[#4c739a] hover:text-primary transition-colors">Início</a>
+                <span class="material-symbols-outlined text-xs text-[#4c739a]">chevron_right</span>
+                <a href="{% url 'arbitro:dashboard' %}" class="text-[#4c739a] hover:text-primary transition-colors">Dashboard de Árbitros</a>
+                <span class="material-symbols-outlined text-xs text-[#4c739a]">chevron_right</span>
+                <span class="text-primary font-bold">Novo Árbitro</span>
+            </nav>
+
+            <!-- Mensagens -->
+            {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for message in messages %}
+                        <div class="p-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Page Heading -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold tracking-tight dark:text-white mb-2">Registo de Novo Árbitro</h1>
+                <p class="text-[#4c739a] max-w-2xl">Complete o formulário abaixo para incluir um novo profissional na base de dados médica do Gol Health.</p>
+            </div>
+
+            <!-- Form Sections -->
+            <form id="form-arbitro" method="post" class="space-y-8 pb-12">
+                {% csrf_token %}
+
+                <!-- 1. Dados Pessoais -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl border border-[#e7edf3] dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div class="bg-[#f8fafc] dark:bg-slate-800/50 px-6 py-4 border-b border-[#e7edf3] dark:border-slate-800 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">badge</span>
+                        <h3 class="font-bold text-[#0d141b] dark:text-white">1. Dados Pessoais</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Nome Completo</label>
+                            {{ form.nome_completo }}
+                            {% if form.nome_completo.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.nome_completo.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="flex items-start gap-4">
+                                <div class="flex-1">
+                                    <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Data de Nascimento</label>
+                                    {{ form.data_nascimento }}
+                                    {% if form.data_nascimento.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.data_nascimento.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="w-28">
+                                    <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Idade</label>
+                                    <input
+                                        type="text"
+                                        id="id_idade"
+                                        name="idade"
+                                        readonly
+                                        class="w-full h-[42px] px-3 rounded-lg border border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white bg-white text-slate-700"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">NIF</label>
+                            {{ form.cpf_nif }}
+                            {% if form.cpf_nif.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.cpf_nif.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Sexo</label>
+                            <div class="flex gap-4 items-center h-[42px]">
+                                {{ form.sexo }}
+                            </div>
+                            {% if form.sexo.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.sexo.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Informação Desportiva -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl border border-[#e7edf3] dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div class="bg-[#f8fafc] dark:bg-slate-800/50 px-6 py-4 border-b border-[#e7edf3] dark:border-slate-800 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">sports_handball</span>
+                        <h3 class="font-bold text-[#0d141b] dark:text-white">2. Informação Desportiva</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Categoria</label>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    {{ form.categoria }}
+                                    {% if form.categoria.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.categoria.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <button
+                                    type="button"
+                                    id="open-nova-categoria"
+                                    class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors self-center"
+                                    title="Adicionar nova categoria"
+                                >
+                                    <span class="text-2xl leading-none font-bold">+</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Associação de Futebol</label>
+                            {{ form.associacao_futebol }}
+                            {% if form.associacao_futebol.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.associacao_futebol.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Modalidade</label>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    {{ form.modalidade }}
+                                    {% if form.modalidade.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.modalidade.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <button
+                                    type="button"
+                                    id="open-nova-modalidade"
+                                    class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors self-center"
+                                    title="Adicionar nova modalidade"
+                                >
+                                    <span class="text-2xl leading-none font-bold">+</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Contactos -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl border border-[#e7edf3] dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div class="bg-[#f8fafc] dark:bg-slate-800/50 px-6 py-4 border-b border-[#e7edf3] dark:border-slate-800 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">contact_mail</span>
+                        <h3 class="font-bold text-[#0d141b] dark:text-white">3. Contactos</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.email.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Telemóvel</label>
+                            {{ form.telefone }}
+                            {% if form.telefone.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.telefone.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Dados da Morada</label>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Código Postal</label>
+                                    {{ form.codigo_postal }}
+                                    {% if form.codigo_postal.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.codigo_postal.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Localidade</label>
+                                    {{ form.localidade }}
+                                    {% if form.localidade.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.localidade.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Rua / Avenida</label>
+                                    {{ form.rua_avenida }}
+                                    {% if form.rua_avenida.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.rua_avenida.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Número</label>
+                                    {{ form.numero }}
+                                    {% if form.numero.errors %}
+                                        <p class="mt-1 text-xs text-red-600">{{ form.numero.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-xs font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Complemento</label>
+                                {{ form.complemento }}
+                                {% if form.complemento.errors %}
+                                    <p class="mt-1 text-xs text-red-600">{{ form.complemento.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-xs font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Observações</label>
+                                {{ form.observacoes_morada }}
+                                {% if form.observacoes_morada.errors %}
+                                    <p class="mt-1 text-xs text-red-600">{{ form.observacoes_morada.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Saúde e Documentação -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl border border-[#e7edf3] dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div class="bg-[#f8fafc] dark:bg-slate-800/50 px-6 py-4 border-b border-[#e7edf3] dark:border-slate-800 flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">description</span>
+                        <h3 class="font-bold text-[#0d141b] dark:text-white">4. Saúde e Documentação</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Data do Último Exame Médico</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#4c739a] text-xl">calendar_today</span>
+                                {{ form.data_ultimo_exame }}
+                            </div>
+                            {% if form.data_ultimo_exame.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.data_ultimo_exame.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-2 text-xs text-[#4c739a]">O exame médico deve estar dentro do período de validade regulamentar.</p>
+                            <div class="mt-4">
+                                <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">{{ form.estado_aptidao.label }}</label>
+                                {{ form.estado_aptidao }}
+                                {% if form.estado_aptidao.errors %}
+                                    <p class="mt-1 text-xs text-red-600">{{ form.estado_aptidao.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Documento de Identificação</label>
+                            <div class="border-2 border-dashed border-[#d1d5db] dark:border-slate-700 rounded-xl p-6 flex flex-col items-center justify-center text-center hover:border-primary/50 transition-colors cursor-pointer bg-slate-50/50 dark:bg-slate-800/20">
+                                <span class="material-symbols-outlined text-primary text-4xl mb-2">upload_file</span>
+                                <p class="text-sm font-medium dark:text-white">Clique para carregar ou arraste e solte</p>
+                                <p class="text-xs text-[#4c739a] mt-1">PDF, JPG ou PNG (Máx. 5MB)</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Final Actions -->
+                <div class="flex items-center justify-end gap-4 pt-4 border-t border-[#e7edf3] dark:border-slate-800">
+                    <a href="{% url 'arbitro:dashboard' %}" class="px-8 py-3 rounded-lg text-[#4c739a] hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors" type="button">Cancelar</a>
+                    <button class="bg-primary hover:bg-primary/90 text-white px-10 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transform active:scale-95 transition-all" type="submit">
+                        <span class="material-symbols-outlined">how_to_reg</span>
+                        Registar Árbitro
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-auto border-t border-[#e7edf3] dark:border-slate-800 p-8 text-center text-sm text-[#4c739a]">
+            <p>© 2024 Gol Health - Sistema de Gestão de Saúde Desportiva</p>
+        </footer>
+    </main>
+</div>
+<!-- Modal: Nova Categoria -->
+<div
+    id="modal-nova-categoria"
+    class="fixed inset-0 z-[60] hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-nova-categoria-title"
+>
+    <div
+        class="absolute inset-0 bg-slate-900/60"
+        id="modal-nova-categoria-overlay"
+    ></div>
+
+    <div class="relative z-[61] min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 id="modal-nova-categoria-title" class="text-lg font-bold text-slate-900 dark:text-white">
+                    Nova Categoria
+                </h2>
+                <button
+                    type="button"
+                    id="close-nova-categoria"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                    aria-label="Fechar"
+                >
+                    <span class="material-icons-round text-base">close</span>
+                </button>
+            </div>
+
+            <div class="px-6 py-5">
+                <form method="post" action="{% url 'core:categoria_novo_ajax' %}" id="form-nova-categoria">
+                    {% csrf_token %}
+                    <input type="hidden" name="redirect_to" value="{% url 'arbitro:novo' %}"/>
+
+                    <div>
+                        <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Nome</label>
+                        {{ categoria_form.nome }}
+                        <p id="erro-nova-categoria" class="mt-1 text-xs text-red-600"></p>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
+                        <button
+                            type="button"
+                            id="cancel-nova-categoria"
+                            class="px-6 py-2 rounded-lg text-[#4c739a] hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transform active:scale-95 transition-all"
+                        >
+                            <span class="material-icons-round text-base">add</span>
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nova Modalidade -->
+<div
+    id="modal-nova-modalidade"
+    class="fixed inset-0 z-[61] hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-nova-modalidade-title"
+>
+    <div
+        class="absolute inset-0 bg-slate-900/60"
+        id="modal-nova-modalidade-overlay"
+    ></div>
+
+    <div class="relative z-[62] min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+                <h2 id="modal-nova-modalidade-title" class="text-lg font-bold text-slate-900 dark:text-white">
+                    Nova Modalidade
+                </h2>
+                <button
+                    type="button"
+                    id="close-nova-modalidade"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                    aria-label="Fechar"
+                >
+                    <span class="material-icons-round text-base">close</span>
+                </button>
+            </div>
+
+            <div class="px-6 py-5">
+                <form method="post" action="{% url 'core:modalidade_novo_ajax' %}" id="form-nova-modalidade">
+                    {% csrf_token %}
+                    <input type="hidden" name="redirect_to" value="{% url 'arbitro:novo' %}"/>
+
+                    <div>
+                        <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Nome</label>
+                        {{ modalidade_form.nome }}
+                        <p id="erro-nova-modalidade" class="mt-1 text-xs text-red-600"></p>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
+                        <button
+                            type="button"
+                            id="cancel-nova-modalidade"
+                            class="px-6 py-2 rounded-lg text-[#4c739a] hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transform active:scale-95 transition-all"
+                        >
+                            <span class="material-icons-round text-base">add</span>
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const modal = document.getElementById('modal-nova-categoria');
+        const openBtn = document.getElementById('open-nova-categoria');
+        const closeBtn = document.getElementById('close-nova-categoria');
+        const cancelBtn = document.getElementById('cancel-nova-categoria');
+        const overlay = document.getElementById('modal-nova-categoria-overlay');
+
+        if (!modal || !openBtn) return;
+
+        const openModal = () => modal.classList.remove('hidden');
+        const closeModal = () => modal.classList.add('hidden');
+
+        openBtn.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+        });
+
+        // Se veio do POST da modal com erro, abre automaticamente para corrigir.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('categoria_modal') === '1') {
+            openModal();
+        }
+
+        const form = document.getElementById('form-nova-categoria');
+        const nomeInput = form ? form.querySelector('input[name="nome"]') : null;
+        const erroEl = document.getElementById('erro-nova-categoria');
+
+        if (form && nomeInput) {
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                if (!nomeInput.value.trim()) {
+                    if (erroEl) erroEl.textContent = 'Indique um nome.';
+                    return;
+                }
+
+                const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+                const csrf = csrfInput ? csrfInput.value : '';
+
+                if (erroEl) erroEl.textContent = '';
+
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-CSRFToken': csrf,
+                        },
+                        body: new URLSearchParams({ nome: nomeInput.value.trim() }),
+                        credentials: 'same-origin',
+                    });
+
+                    const payload = await resp.json();
+                    if (!resp.ok || !payload.ok) {
+                        const err = payload?.errors?.nome?.[0] || 'Erro ao guardar categoria.';
+                        if (erroEl) erroEl.textContent = err;
+                        return;
+                    }
+
+                    // Atualiza o dropdown da categoria e seleciona a nova.
+                    const select = document.getElementById('id_categoria');
+                    if (select) {
+                        const opt = document.createElement('option');
+                        opt.value = payload.id;
+                        opt.textContent = payload.nome;
+                        select.appendChild(opt);
+                        select.value = String(payload.id);
+                    }
+
+                    nomeInput.value = '';
+                    closeModal();
+                } catch (err) {
+                    if (erroEl) erroEl.textContent = 'Erro de rede ao guardar categoria.';
+                }
+            });
+        }
+    })();
+</script>
+
+<script>
+    (function () {
+        const modal = document.getElementById('modal-nova-modalidade');
+        const openBtn = document.getElementById('open-nova-modalidade');
+        const closeBtn = document.getElementById('close-nova-modalidade');
+        const cancelBtn = document.getElementById('cancel-nova-modalidade');
+        const overlay = document.getElementById('modal-nova-modalidade-overlay');
+
+        if (!modal || !openBtn) return;
+
+        const openModal = () => modal.classList.remove('hidden');
+        const closeModal = () => modal.classList.add('hidden');
+
+        openBtn.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+        });
+
+        // Se veio do POST da modal com erro, abre automaticamente para corrigir.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('modalidade_modal') === '1') {
+            openModal();
+        }
+
+        const form = document.getElementById('form-nova-modalidade');
+        const nomeInput = form ? form.querySelector('input[name="nome"]') : null;
+        const erroEl = document.getElementById('erro-nova-modalidade');
+
+        if (form && nomeInput) {
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                if (!nomeInput.value.trim()) {
+                    if (erroEl) erroEl.textContent = 'Indique um nome.';
+                    return;
+                }
+
+                const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+                const csrf = csrfInput ? csrfInput.value : '';
+
+                if (erroEl) erroEl.textContent = '';
+
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-CSRFToken': csrf,
+                        },
+                        body: new URLSearchParams({ nome: nomeInput.value.trim() }),
+                        credentials: 'same-origin',
+                    });
+
+                    const payload = await resp.json();
+                    if (!resp.ok || !payload.ok) {
+                        const err = payload?.errors?.nome?.[0] || 'Erro ao guardar modalidade.';
+                        if (erroEl) erroEl.textContent = err;
+                        return;
+                    }
+
+                    // Atualiza o dropdown da modalidade e seleciona a nova.
+                    const select = document.getElementById('id_modalidade');
+                    if (select) {
+                        const opt = document.createElement('option');
+                        opt.value = payload.id;
+                        opt.textContent = payload.nome;
+                        select.appendChild(opt);
+                        select.value = String(payload.id);
+                    }
+
+                    nomeInput.value = '';
+                    closeModal();
+                } catch (err) {
+                    if (erroEl) erroEl.textContent = 'Erro de rede ao guardar modalidade.';
+                }
+            });
+        }
+    })();
+</script>
+<script>
+    (function () {
+        const cpInput = document.getElementById('id_codigo_postal');
+        const localidadeInput = document.getElementById('id_localidade');
+        const ruaInput = document.getElementById('id_rua_avenida');
+
+        if (!cpInput || !localidadeInput || !ruaInput) return;
+
+        function normalizarCP(valor) {
+            const digits = String(valor || '').replace(/\D/g, '');
+            if (digits.length !== 7) return null;
+            return digits.slice(0, 4) + '-' + digits.slice(4);
+        }
+
+        let lastRequestToken = 0;
+
+        async function lookupEndereco() {
+            const cp = normalizarCP(cpInput.value);
+            if (!cp) return;
+
+            const token = ++lastRequestToken;
+            try {
+                // Usa o endpoint do backend para evitar CORS e manter a lógica no servidor.
+                const resp = await fetch(
+                    "{% url 'arbitro:lookup_codigo_postal' %}?codigo_postal=" +
+                    encodeURIComponent(cp),
+                    { method: "GET" }
+                );
+
+                if (!resp.ok) {
+                    // Não bloquear o utilizador: apenas não preenche auto.
+                    return;
+                }
+
+                const data = await resp.json();
+                if (token !== lastRequestToken) return; // evita corrida de requests
+
+                if (data.localidade) localidadeInput.value = data.localidade;
+                if (data.rua_avenida) ruaInput.value = data.rua_avenida;
+            } catch (e) {
+                // Em caso de erro de rede/serviço externo: mantém campos como estão.
+            }
+        }
+
+        // Busca quando o utilizador sai do campo (melhor para UX).
+        cpInput.addEventListener('blur', lookupEndereco);
+    })();
+</script>
+<script>
+    (function () {
+        const dobInput = document.getElementById('id_data_nascimento');
+        const idadeInput = document.getElementById('id_idade');
+        if (!dobInput || !idadeInput) return;
+
+        function calcularIdade(dataStr) {
+            if (!dataStr) return '';
+
+            const parts = dataStr.split('-');
+            if (parts.length !== 3) return '';
+
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const day = parseInt(parts[2], 10);
+            if (!year || !month || !day) return '';
+
+            const dob = new Date(year, month - 1, day);
+            const hoje = new Date();
+
+            let idade = hoje.getFullYear() - dob.getFullYear();
+            const jaFezAniversario =
+                hoje.getMonth() > dob.getMonth() ||
+                (hoje.getMonth() === dob.getMonth() && hoje.getDate() >= dob.getDate());
+
+            if (!jaFezAniversario) idade -= 1;
+            if (idade < 0) return '';
+            return String(idade);
+        }
+
+        function atualizarIdade() {
+            const valor = calcularIdade(dobInput.value);
+            idadeInput.value = valor;
+        }
+
+        dobInput.addEventListener('change', atualizarIdade);
+        dobInput.addEventListener('input', atualizarIdade);
+        atualizarIdade();
+    })();
+</script>
+</body>
+</html>
+

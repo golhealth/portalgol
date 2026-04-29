@@ -1,0 +1,402 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Marcar Exames | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: "#0d59f2", "background-light": "#f5f6f8", "background-dark": "#101622" }, fontFamily: { display: ["Lexend"] } } }
+        };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+        {% include "core/partials/app_sidebar.html" %}
+
+    <main class="flex-1 ml-64 min-h-screen">
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8 space-y-6">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+                <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Época</label>
+                        <select name="epoca" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white" onchange="this.form.submit()">
+                            <option value="">Selecionar época</option>
+                            {% for e in epocas %}
+                                <option value="{{ e.id }}" {% if epoca_selecionada and e.id == epoca_selecionada.id %}selected{% endif %}>{{ e.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Associação</label>
+                        <select name="associacao" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white" {% if not epoca_selecionada %}disabled{% endif %} onchange="this.form.submit()">
+                            <option value="">Selecionar associação</option>
+                            {% for item in associacoes %}
+                                <option value="{{ item.associacao.id }}" {% if associacao_selecionada and item.associacao.id == associacao_selecionada.id %}selected{% endif %}>{{ item.associacao.nome_completo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="text-sm text-slate-500">
+                        Selecione árbitro pendente e depois o prestador.
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-lg">Árbitros sem exame marcado</h3>
+                </div>
+                <div class="p-6">
+                    {% if epoca_selecionada and associacao_selecionada %}
+                        {% if arbitros_pendentes %}
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm" id="tbl-arbitros-pendentes">
+                                    <thead>
+                                    <tr class="text-left">
+                                        <th class="pb-3">Nome</th>
+                                        <th class="pb-3">NIF</th>
+                                        <th class="pb-3">Categoria</th>
+                                        <th class="pb-3 text-right">Ação</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for a in arbitros_pendentes %}
+                                        <tr data-arbitro-id="{{ a.id }}" class="border-t border-slate-200 dark:border-slate-800">
+                                            <td class="py-3">{{ a.nome_completo }}</td>
+                                            <td class="py-3">{{ a.cpf_nif|default:"-" }}</td>
+                                            <td class="py-3">{% if a.categoria %}{{ a.categoria.nome }}{% else %}-{% endif %}</td>
+                                            <td class="py-3 text-right">
+                                                <button
+                                                    type="button"
+                                                    class="btn-marcar px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold"
+                                                    data-arbitro-id="{{ a.id }}"
+                                                    data-arbitro-nome="{{ a.nome_completo }}"
+                                                >
+                                                    Marcar exame
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-slate-500">Todos os árbitros desta época/associação já têm exame marcado.</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-slate-500">Selecione época e associação para listar os árbitros pendentes.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="modal-marcar" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">Selecionar prestador</h3>
+            <button id="fechar-modal-marcar" type="button" class="text-slate-500"><span class="material-icons-round">close</span></button>
+        </div>
+        <p id="modal-arbitro-nome" class="text-sm text-slate-600 dark:text-slate-300 mb-4"></p>
+        <form id="form-marcar-exame" action="{% url 'exames:marcar_exame_ajax' %}" method="post" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="epoca_id" value="{% if epoca_selecionada %}{{ epoca_selecionada.id }}{% endif %}">
+            <input type="hidden" name="associacao_id" value="{% if associacao_selecionada %}{{ associacao_selecionada.id }}{% endif %}">
+            <input type="hidden" name="arbitro_id" id="marcar-arbitro-id" value="">
+            <div>
+                <label class="block text-sm font-medium mb-2">Prestador</label>
+                <select name="prestador_id" id="marcar-prestador-id" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                    <option value="">Selecionar prestador</option>
+                    {% for p in prestadores %}
+                        <option value="{{ p.id }}">{{ p.nome_completo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2">Exames disponíveis do prestador</label>
+                <div id="marcar-exames-loading" class="hidden text-xs text-slate-500 mb-2">A carregar exames...</div>
+                <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3 bg-slate-50/60 dark:bg-slate-800/50">
+                    <input type="text" id="marcar-exame-filtro" autocomplete="off" placeholder="Filtrar lista de exames…" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled/>
+                    <div class="flex gap-2">
+                        <select id="marcar-exame-select" class="flex-1 rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled>
+                            <option value="">Selecione um exame</option>
+                        </select>
+                        <button type="button" id="marcar-exame-add" class="shrink-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700">Adicionar</button>
+                    </div>
+                    <div id="marcar-exames-selecionados" class="min-h-8 flex flex-wrap gap-2">
+                        <p class="text-xs text-slate-500">Selecione um prestador para listar exames.</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="marcar-data-hora-consulta" class="block text-sm font-medium mb-2">Data e hora da consulta</label>
+                <input
+                    type="datetime-local"
+                    id="marcar-data-hora-consulta"
+                    name="data_hora_consulta"
+                    required
+                    class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"
+                />
+            </div>
+            <div>
+                <label for="marcar-observacao" class="block text-sm font-medium mb-2">Observação</label>
+                <textarea id="marcar-observacao" name="observacao" rows="3" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Opcional"></textarea>
+            </div>
+            <p id="marcar-erro" class="hidden text-xs text-red-600"></p>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="cancelar-modal-marcar" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700">Cancelar</button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white font-semibold">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById("modal-marcar");
+        const fechar = document.getElementById("fechar-modal-marcar");
+        const cancelar = document.getElementById("cancelar-modal-marcar");
+        const form = document.getElementById("form-marcar-exame");
+        const arbitroIdInput = document.getElementById("marcar-arbitro-id");
+        const arbitroNome = document.getElementById("modal-arbitro-nome");
+        const erro = document.getElementById("marcar-erro");
+        const prestadorSelect = document.getElementById("marcar-prestador-id");
+        const examesSelecionadosWrap = document.getElementById("marcar-exames-selecionados");
+        const exameSelect = document.getElementById("marcar-exame-select");
+        const exameAddBtn = document.getElementById("marcar-exame-add");
+        const exameFiltro = document.getElementById("marcar-exame-filtro");
+        const examesLoading = document.getElementById("marcar-exames-loading");
+        const observacaoInput = document.getElementById("marcar-observacao");
+        const dataHoraConsultaInput = document.getElementById("marcar-data-hora-consulta");
+
+        let examesDisponiveis = [];
+        let examesSelecionados = [];
+
+        function marcarRemoverHiddenExames() {
+            form.querySelectorAll('input[data-marcar-exame-hidden="1"]').forEach((node) => node.remove());
+        }
+
+        function marcarRenderHiddenInputs() {
+            marcarRemoverHiddenExames();
+            examesSelecionados.forEach((nome) => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "exames[]";
+                input.value = nome;
+                input.setAttribute("data-marcar-exame-hidden", "1");
+                form.appendChild(input);
+            });
+        }
+
+        function textoFiltroMarcar() {
+            return (exameFiltro && exameFiltro.value) ? exameFiltro.value.trim().toLowerCase() : "";
+        }
+
+        function marcarRenderSelecionados() {
+            if (!examesSelecionadosWrap) return;
+            examesSelecionadosWrap.innerHTML = "";
+            if (!examesSelecionados.length) {
+                examesSelecionadosWrap.innerHTML = '<p class="text-xs text-slate-500">Nenhum exame selecionado. Escolha no menu e clique em Adicionar.</p>';
+                return;
+            }
+            examesSelecionados.forEach((nome, idx) => {
+                const chip = document.createElement("span");
+                chip.className = "inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium";
+                const txt = document.createElement("span");
+                txt.textContent = nome;
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "text-primary/80 hover:text-primary";
+                btn.setAttribute("aria-label", "Remover");
+                btn.textContent = "×";
+                btn.addEventListener("click", () => {
+                    examesSelecionados.splice(idx, 1);
+                    marcarRenderSelecionados();
+                    marcarRenderHiddenInputs();
+                });
+                chip.appendChild(txt);
+                chip.appendChild(btn);
+                examesSelecionadosWrap.appendChild(chip);
+            });
+        }
+
+        function marcarResetSelect() {
+            if (!exameSelect) return;
+            exameSelect.innerHTML = '<option value="">Selecione um exame</option>';
+            exameSelect.disabled = true;
+            if (exameFiltro) {
+                exameFiltro.value = "";
+                exameFiltro.disabled = true;
+            }
+        }
+
+        function marcarRenderExameSelect() {
+            if (!exameSelect) return;
+            exameSelect.innerHTML = '<option value="">Selecione um exame</option>';
+            const q = textoFiltroMarcar();
+            const lista = q ? examesDisponiveis.filter((n) => n.toLowerCase().includes(q)) : examesDisponiveis.slice();
+            if (!lista.length) {
+                exameSelect.disabled = !examesDisponiveis.length;
+                if (exameFiltro) exameFiltro.disabled = !examesDisponiveis.length;
+                return;
+            }
+            lista.forEach((nome) => {
+                const opt = document.createElement("option");
+                opt.value = nome;
+                opt.textContent = nome;
+                exameSelect.appendChild(opt);
+            });
+            exameSelect.disabled = false;
+            if (exameFiltro && examesDisponiveis.length) exameFiltro.disabled = false;
+        }
+
+        async function carregarExamesPrestador(prestadorId) {
+            examesDisponiveis = [];
+            examesSelecionados = [];
+            marcarRenderSelecionados();
+            marcarRenderHiddenInputs();
+            marcarResetSelect();
+            if (!prestadorId) {
+                if (examesSelecionadosWrap) {
+                    examesSelecionadosWrap.innerHTML = '<p class="text-xs text-slate-500">Selecione um prestador para listar exames.</p>';
+                }
+                return;
+            }
+            examesLoading.classList.remove("hidden");
+            try {
+                const url = "{% url 'exames:prestador_exames_ajax' %}?prestador_id=" + encodeURIComponent(prestadorId);
+                const resp = await fetch(url, { method: "GET", credentials: "same-origin" });
+                const payload = await resp.json().catch(() => ({}));
+                if (!resp.ok || !payload.ok) {
+                    if (examesSelecionadosWrap) {
+                        examesSelecionadosWrap.innerHTML = '<p class="text-xs text-red-600">Não foi possível carregar os exames do prestador.</p>';
+                    }
+                    return;
+                }
+                examesDisponiveis = payload.exames || [];
+                marcarRenderExameSelect();
+                if (!examesDisponiveis.length && examesSelecionadosWrap) {
+                    examesSelecionadosWrap.innerHTML = '<p class="text-xs text-amber-600 dark:text-amber-400">Este prestador não tem exames configurados.</p>';
+                } else if (examesDisponiveis.length) {
+                    marcarRenderSelecionados();
+                }
+            } catch (err) {
+                if (examesSelecionadosWrap) {
+                    examesSelecionadosWrap.innerHTML = '<p class="text-xs text-red-600">Falha ao consultar os exames do prestador.</p>';
+                }
+            } finally {
+                examesLoading.classList.add("hidden");
+            }
+        }
+
+        function abrirModal(arbitroId, nome) {
+            arbitroIdInput.value = arbitroId;
+            arbitroNome.textContent = "Árbitro: " + nome;
+            erro.classList.add("hidden");
+            erro.textContent = "";
+            prestadorSelect.value = "";
+            observacaoInput.value = "";
+            if (dataHoraConsultaInput) dataHoraConsultaInput.value = "";
+            examesDisponiveis = [];
+            examesSelecionados = [];
+            marcarRenderHiddenInputs();
+            marcarResetSelect();
+            if (examesSelecionadosWrap) {
+                examesSelecionadosWrap.innerHTML = '<p class="text-xs text-slate-500">Selecione um prestador para listar exames.</p>';
+            }
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function fecharModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        document.querySelectorAll(".btn-marcar").forEach((btn) => {
+            btn.addEventListener("click", function () {
+                abrirModal(this.dataset.arbitroId, this.dataset.arbitroNome || "");
+            });
+        });
+
+        fechar.addEventListener("click", fecharModal);
+        cancelar.addEventListener("click", fecharModal);
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) fecharModal();
+        });
+        prestadorSelect.addEventListener("change", function () {
+            carregarExamesPrestador(this.value);
+        });
+
+        if (exameFiltro) {
+            exameFiltro.addEventListener("input", function () {
+                marcarRenderExameSelect();
+            });
+        }
+
+        if (exameAddBtn && exameSelect) {
+            exameAddBtn.addEventListener("click", function () {
+                if (!exameSelect.value) return;
+                const nome = exameSelect.value;
+                if (examesSelecionados.indexOf(nome) === -1) {
+                    examesSelecionados.push(nome);
+                    marcarRenderSelecionados();
+                    marcarRenderHiddenInputs();
+                }
+                exameSelect.value = "";
+            });
+        }
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            erro.classList.add("hidden");
+            erro.textContent = "";
+            marcarRenderHiddenInputs();
+            const fd = new FormData(form);
+            const exames = fd.getAll("exames[]");
+            if (!exames.length) {
+                erro.textContent = "Selecione pelo menos um exame.";
+                erro.classList.remove("hidden");
+                return;
+            }
+            if (dataHoraConsultaInput && !dataHoraConsultaInput.value.trim()) {
+                erro.textContent = "Indique a data e hora da consulta.";
+                erro.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: "POST",
+                    body: fd,
+                    headers: { "X-Requested-With": "fetch" },
+                    credentials: "same-origin",
+                });
+                const payload = await resp.json().catch(() => ({}));
+                if (!resp.ok || !payload.ok) {
+                    erro.textContent = payload.error || "Erro ao marcar exame.";
+                    erro.classList.remove("hidden");
+                    return;
+                }
+                const row = document.querySelector('tr[data-arbitro-id="' + payload.arbitro_id + '"]');
+                if (row) row.remove();
+                fecharModal();
+            } catch (err) {
+                erro.textContent = "Falha de comunicação ao marcar exame.";
+                erro.classList.remove("hidden");
+            }
+        });
+    })();
+</script>
+</body>
+</html>

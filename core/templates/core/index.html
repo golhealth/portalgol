@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: "#0066CC", "background-light": "#F8FAFC", "background-dark": "#0F172A" },
+                    fontFamily: { display: ["Poppins", "sans-serif"], body: ["Inter", "sans-serif"] },
+                },
+            },
+        };
+    </script>
+</head>
+<body class="font-body bg-background-light text-slate-800 min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <h1 class="text-3xl font-display font-bold text-primary mb-4">Gol Health</h1>
+        <p class="text-slate-600 mb-6">Bem-vindo ao site.</p>
+        <a href="{% url 'core:login' %}" class="inline-block bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-opacity-90">Área de Cliente - Login</a>
+    </div>
+</body>
+</html>

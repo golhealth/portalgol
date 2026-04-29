@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Editar Ato Médico | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen">
+        <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold">Editar Ato Médico</h2>
+                    <p class="text-slate-500 dark:text-slate-400">Atualize o nome e o estado do ato médico.</p>
+                </div>
+            </div>
+
+            <form method="post" class="space-y-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 md:p-8">
+                {% csrf_token %}
+
+                <section class="space-y-4">
+                    <h3 class="font-bold text-lg flex items-center gap-2">
+                        <span class="material-icons-round text-primary">assignment</span>
+                        Dados do Ato Médico
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                {{ form.nome.label }}
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.nome.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                {{ form.ativo.label }}
+                            </label>
+                            <div class="flex items-center gap-3">
+                                {{ form.ativo }}
+                                <span class="text-sm text-slate-600 dark:text-slate-300">Ato médico ativo</span>
+                            </div>
+                            {% if form.ativo.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.ativo.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+
+                <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <a href="{% url 'exames:dashboard' %}" class="px-8 py-3 rounded-lg text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            class="bg-primary hover:bg-primary/90 text-white px-10 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transform active:scale-95 transition-all">
+                        <span class="material-icons-round">save</span>
+                        Guardar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+</body>
+</html>
+

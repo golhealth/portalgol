@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Relação de Árbitros | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"]
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen">
+        <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8">
+            <div class="flex justify-between items-end mb-6 gap-4">
+                <div class="min-w-0">
+                    <h2 class="text-2xl font-bold truncate">Relação de Árbitros</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                        Época: <span class="font-semibold">{{ epoca.nome }}</span> · Associação: <span class="font-semibold">{{ associacao.nome_completo }}</span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'core:epoca_detalhe' epoca.pk %}"
+                       class="text-sm text-[#4c739a] hover:text-primary transition-colors flex items-center gap-2">
+                        <span class="material-icons-round text-base">chevron_left</span>
+                        Voltar
+                    </a>
+                    <a href="{% url 'core:epoca_associacao_import_arbitros' epoca.pk associacao.pk %}"
+                       class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-lg shadow-primary/20">
+                        <span class="material-icons-round text-sm">upload_file</span>
+                        Importar Excel
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white">Árbitros (ativos)</h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            Clique no cabeçalho da coluna para ordenar/filtrar.
+                        </p>
+                    </div>
+                    <div class="min-w-[260px]">
+                        <input
+                            id="arbitros-filtro"
+                            type="text"
+                            class="w-full pl-4 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary/50 text-sm"
+                            placeholder="Filtrar por Nome..."
+                        />
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    {% if arbitros %}
+                        <div class="overflow-x-auto">
+                            <table id="tabela-arbitros" class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left">
+                                        <th data-col="0" data-label="Nome"
+                                            class="cursor-pointer select-none pb-3 font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
+                                            Nome
+                                        </th>
+                                        <th data-col="1" data-label="Categoria"
+                                            class="cursor-pointer select-none pb-3 font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
+                                            Categoria
+                                        </th>
+                                        <th data-col="2" data-label="Modalidade"
+                                            class="cursor-pointer select-none pb-3 font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
+                                            Modalidade
+                                        </th>
+                                        <th data-col="3" data-label="Ativo"
+                                            class="cursor-pointer select-none pb-3 font-semibold text-slate-600 dark:text-slate-300 text-right hover:text-primary transition-colors">
+                                            Ativo
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for b in arbitros %}
+                                        <tr class="border-t border-slate-200 dark:border-slate-800">
+                                            <td class="py-3">{{ b.nome_completo }}</td>
+                                            <td class="py-3">{{ b.categoria.nome|default:"—" }}</td>
+                                            <td class="py-3">{{ b.modalidade.nome|default:"—" }}</td>
+                                            <td class="py-3 text-right">
+                                                {% if b.ativo %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">Sim</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs font-semibold">Não</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">
+                            Ainda não existem árbitros ativos para esta associação nesta época.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const input = document.getElementById("arbitros-filtro");
+        const table = document.getElementById("tabela-arbitros");
+        if (!input || !table) return;
+
+        const ths = Array.from(table.querySelectorAll("thead th[data-col]"));
+        const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+        let activeCol = 0;
+        let activeLabel = "Nome";
+        let sortDir = "asc";
+
+        function getQuery() {
+            return (input.value || "").toLowerCase().trim();
+        }
+
+        function applyFilter() {
+            const q = getQuery();
+            rows.forEach((row) => {
+                const cell = row.cells[activeCol];
+                const text = cell ? cell.innerText.toLowerCase() : "";
+                row.style.display = (!q || text.includes(q)) ? "" : "none";
+            });
+        }
+
+        function sortRows() {
+            const q = getQuery();
+
+            const visibleRows = rows.filter((row) => {
+                if (q) {
+                    const cell = row.cells[activeCol];
+                    const text = cell ? cell.innerText.toLowerCase() : "";
+                    return text.includes(q);
+                }
+                return row.style.display !== "none";
+            });
+
+            visibleRows.sort((a, b) => {
+                const aText = (a.cells[activeCol]?.innerText || "").trim().toLowerCase();
+                const bText = (b.cells[activeCol]?.innerText || "").trim().toLowerCase();
+                const cmp = aText.localeCompare(bText, "pt", { sensitivity: "base" });
+                return sortDir === "desc" ? -cmp : cmp;
+            });
+
+            const tbody = table.querySelector("tbody");
+            visibleRows.forEach((row) => tbody.appendChild(row));
+        }
+
+        ths.forEach((th) => {
+            th.addEventListener("click", function () {
+                const clickedCol = parseInt(th.getAttribute("data-col"), 10) || 0;
+                activeCol = clickedCol;
+                activeLabel = th.getAttribute("data-label") || "Coluna";
+
+                if (clickedCol === activeCol && input.dataset.sortCol === String(clickedCol)) {
+                    sortDir = sortDir === "asc" ? "desc" : "asc";
+                } else {
+                    sortDir = "asc";
+                }
+                input.dataset.sortCol = String(clickedCol);
+
+                input.placeholder = "Filtrar por " + activeLabel + "...";
+                input.value = "";
+                applyFilter();
+                sortRows();
+            });
+        });
+
+        input.addEventListener("input", function () {
+            applyFilter();
+            sortRows();
+        });
+    })();
+</script>
+</body>
+</html>
+

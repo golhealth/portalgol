@@ -1,0 +1,203 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Detalhe da Associação | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <main class="flex-1 ml-64 min-h-screen">
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8">
+            <div class="flex justify-between items-end mb-6 gap-4">
+                <div class="min-w-0">
+                    <h2 class="text-2xl font-bold truncate">Detalhe da Associação</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm">Visualize os dados registados.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'associacao:editar' associacao.pk %}"
+                       class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors">
+                        <span class="material-icons-round text-sm">edit</span>
+                        Editar
+                    </a>
+                    <a href="{% url 'associacao:dashboard' %}"
+                       class="text-sm text-[#4c739a] hover:text-primary transition-colors flex items-center gap-2">
+                        <span class="material-icons-round text-base">chevron_left</span>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nome</p>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white truncate">{{ associacao.nome_completo }}</h3>
+                    </div>
+                    <div>
+                        {% if associacao.estado == 'ativo' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider">Ativo</span>
+                        {% elif associacao.estado == 'inativo' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">Inativo</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-bold uppercase tracking-wider">{{ associacao.estado }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">NIF</p>
+                        <p class="text-slate-900 dark:text-white">{{ associacao.nif|default:"—" }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Protocolo (Início)</p>
+                        <p class="text-slate-900 dark:text-white">
+                            {% if associacao.inicio_protocolo_data %}{{ associacao.inicio_protocolo_data }}{% endif %}
+                            {% if associacao.inicio_protocolo_data and associacao.inicio_protocolo_hora %} · {% endif %}
+                            {% if associacao.inicio_protocolo_hora %}{{ associacao.inicio_protocolo_hora }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Protocolo (Fim)</p>
+                        <p class="text-slate-900 dark:text-white">
+                            {% if associacao.fim_protocolo_data %}{{ associacao.fim_protocolo_data }}{% endif %}
+                            {% if associacao.fim_protocolo_data and associacao.fim_protocolo_hora %} · {% endif %}
+                            {% if associacao.fim_protocolo_hora %}{{ associacao.fim_protocolo_hora }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Morada</p>
+                        <p class="text-slate-900 dark:text-white">
+                            {{ associacao.rua_avenida|default:"—" }}{% if associacao.numero %}, {{ associacao.numero }}{% endif %}{% if associacao.complemento %} ({{ associacao.complemento }}){% endif %}
+                            {% if associacao.codigo_postal or associacao.localidade %}<br class="block"/>{% endif %}
+                            {% if associacao.codigo_postal %}{{ associacao.codigo_postal }}{% endif %}
+                            {% if associacao.codigo_postal and associacao.localidade %} · {% endif %}
+                            {% if associacao.localidade %}{{ associacao.localidade }}{% endif %}
+                            {% if associacao.concelho or associacao.distrito %}<br class="block"/>{% endif %}
+                            {% if associacao.concelho %}{{ associacao.concelho }}{% endif %}
+                            {% if associacao.concelho and associacao.distrito %} · {% endif %}
+                            {% if associacao.distrito %}{{ associacao.distrito }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                {% if associacao.responsavel or associacao.telefone or associacao.email or associacao.fax or associacao.criado_em %}
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
+                        {% if associacao.responsavel %}
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Responsável</p>
+                                <p class="text-slate-900 dark:text-white">{{ associacao.responsavel }}</p>
+                            </div>
+                        {% endif %}
+                        {% if associacao.telefone %}
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Telefone</p>
+                                <p class="text-slate-900 dark:text-white">{{ associacao.telefone }}</p>
+                            </div>
+                        {% endif %}
+                        {% if associacao.email %}
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">E-mail</p>
+                                <p class="text-slate-900 dark:text-white">{{ associacao.email }}</p>
+                            </div>
+                        {% endif %}
+                        {% if associacao.fax %}
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Fax</p>
+                                <p class="text-slate-900 dark:text-white">{{ associacao.fax }}</p>
+                            </div>
+                        {% endif %}
+                        {% if associacao.criado_em %}
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Criado em</p>
+                                <p class="text-slate-900 dark:text-white">{{ associacao.criado_em }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Atos Médicos / Valores</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Valores registados para esta associação.</p>
+                </div>
+                <div class="p-6">
+                    {% if associacao.exames_valores.all %}
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left">
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Ato médico</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for v in associacao.exames_valores.all %}
+                                        <tr class="border-t border-slate-200 dark:border-slate-800">
+                                            <td class="py-3">{{ v.exame_nome|default:"—" }}</td>
+                                            <td class="py-3">
+                                                {% if v.valor is not None %}
+                                                    {{ v.valor|floatformat:2 }} €
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">Ainda não existem valores registados para esta associação.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
+

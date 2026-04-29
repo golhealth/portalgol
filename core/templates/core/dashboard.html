@@ -1,0 +1,386 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Gol Health | Dashboard Administrativo</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css"/>
+    <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+        .gh-tour-optout {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gh-tour-optout input { width: 14px; height: 14px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 min-h-screen">
+            <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+            <div class="p-8">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold">Visão Geral do Sistema</h2>
+                        <p class="text-slate-500 dark:text-slate-400">Bem-vindo de volta! Aqui está o status dos exames hoje.</p>
+                    </div>
+                    <a id="tour-new-exam-btn" href="{% url 'core:novo_exame' %}" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors">
+                        <span class="material-icons-round text-sm">add</span>
+                        Novo Exame
+                    </a>
+                </div>
+
+                <!-- Stats Row -->
+                <div id="tour-metrics-row" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div id="tour-card-arbitros" class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
+                                <span class="material-icons-round">groups</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Árbitros</p>
+                        <h3 class="text-2xl font-bold mt-1">{{ total_arbitros }}</h3>
+                    </div>
+
+                    <div id="tour-card-pendentes" class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                                <span class="material-icons-round">pending_actions</span>
+                            </div>
+                            <span class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Atenção</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Exames Pendentes</p>
+                        <h3 class="text-2xl font-bold mt-1 text-primary">{{ exames_pendentes }}</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">Árbitros aguardando exame ou com certificação anual vencida.</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-purple-600">
+                                <span class="material-icons-round">event_available</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Exames Realizados (Mês)</p>
+                        <h3 class="text-2xl font-bold mt-1">{{ exames_realizados_mes }}</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">Registos “Carregar exame” no mês atual.</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-orange-600">
+                                <span class="material-icons-round">storefront</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Prestadores Ativos</p>
+                        <h3 class="text-2xl font-bold mt-1">{{ prestadores_ativos }}</h3>
+                        <p class="text-[10px] text-slate-500 mt-1">Estado “Ativo” na ficha do prestador.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Chart Section -->
+                    <div id="tour-certificacao" class="lg:col-span-1 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <h3 class="font-bold text-lg mb-6">Status de Certificação</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Com base na data do último exame (validade considerada 365 dias).</p>
+                        <div class="relative flex justify-center py-4">
+                            <div class="relative w-48 h-48">
+                                <div class="w-full h-full rounded-full shadow-inner" style="background: {{ cert_conic_gradient }}"></div>
+                                <div class="absolute inset-[18%] rounded-full bg-white dark:bg-slate-900 shadow-sm"></div>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                    {% if total_arbitros %}
+                                        <span class="text-3xl font-bold tabular-nums">{{ cert_pct_regular }}%</span>
+                                        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Regular</span>
+                                    {% else %}
+                                        <span class="text-sm text-slate-500 font-medium">Sem dados</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-primary shrink-0"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Regularizados</span>
+                                </div>
+                                <span class="text-sm font-bold tabular-nums">{{ cert_regularizados }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-red-500 shrink-0"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Vencidos / s/ exame</span>
+                                </div>
+                                <span class="text-sm font-bold tabular-nums">{{ cert_vencidos }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-600 shrink-0"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">A vencer (30 dias)</span>
+                                </div>
+                                <span class="text-sm font-bold tabular-nums">{{ cert_a_vencer }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table Section -->
+                    <div id="tour-proximos-exames" class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                        <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <h3 class="font-bold text-lg">Próximos Exames</h3>
+                            <a href="{% url 'exames:exames_marcados' %}" class="text-primary text-sm font-semibold hover:underline">Ver todos</a>
+                        </div>
+                        <div class="flex-1 overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                        <th class="px-6 py-4">Data</th>
+                                        <th class="px-6 py-4">Árbitro</th>
+                                        <th class="px-6 py-4">Tipo de Exame</th>
+                                        <th class="px-6 py-4">Prestador</th>
+                                        <th class="px-6 py-4 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {% for row in proximos_exames %}
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td class="px-6 py-4 text-sm font-medium whitespace-nowrap">{{ row.quando|date:"d M Y, H:i" }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                <div class="w-8 h-8 shrink-0 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-xs font-bold">{{ row.iniciais }}</div>
+                                                <span class="text-sm font-semibold truncate">{{ row.arbitro_nome }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 max-w-xs">
+                                            <span class="px-2 py-1 rounded text-xs font-bold {{ row.tipo_badge_class }}">{{ row.tipo_exame|truncatechars:40 }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ row.prestador_nome }}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <a href="{{ row.detalhe_url }}" class="inline-flex text-slate-400 hover:text-primary" title="Ver marcação"><span class="material-icons-round">chevron_right</span></a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Não há consultas futuras agendadas. Utilize <a href="{% url 'exames:marcar_exames' %}" class="text-primary font-medium hover:underline">Marcar exames</a> para planear.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Section -->
+                <div id="tour-alertas" class="mt-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <span class="material-icons-round text-primary">campaign</span>
+                            Alertas de Vencimento (Próximos 30 dias)
+                        </h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {% for al in alertas_vencimento %}
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border-l-4 {% if al.urgencia == 'red' %}border-l-red-500{% else %}border-l-amber-500{% endif %} border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 shrink-0 rounded-full {% if al.urgencia == 'red' %}bg-red-50 dark:bg-red-900/20 text-red-600{% else %}bg-amber-50 dark:bg-amber-900/20 text-amber-600{% endif %} flex items-center justify-center">
+                                <span class="material-icons-round">{% if al.urgencia == 'red' %}warning{% else %}priority_high{% endif %}</span>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-sm truncate">{{ al.nome }}</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Certificação expira em
+                                    {% if al.urgencia == 'red' %}
+                                        <span class="text-red-600 font-bold">{{ al.dias }} dia{% if al.dias != 1 %}s{% endif %}</span>
+                                    {% else %}
+                                        <span class="text-amber-600 font-bold">{{ al.dias }} dias</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-sm text-slate-500 dark:text-slate-400 col-span-full">Nenhum alerta nos próximos 30 dias. Todos os árbitros com exame registado estão fora dessa janela ou já vencidos.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        (function () {
+            const menu = document.getElementById('user-menu');
+            const toggle = document.getElementById('user-menu-toggle');
+            if (!menu || !toggle) return;
+
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!menu.classList.contains('hidden')) {
+                    if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                        menu.classList.add('hidden');
+                    }
+                }
+            });
+        })();
+
+        (function () {
+            if (typeof introJs === 'undefined') return;
+
+            const username = "{{ request.user.get_username|escapejs }}";
+            const disableKey = "gh_tour_disable_" + username;
+            const doneKey = "gh_tour_done_" + username;
+            const params = new URLSearchParams(window.location.search);
+            const forceStart = params.get("tour") === "1";
+
+            function isDisabled() {
+                return localStorage.getItem(disableKey) === "1";
+            }
+
+            function ensureOptOutToggle() {
+                const tooltip = document.querySelector(".introjs-tooltip");
+                if (!tooltip || tooltip.querySelector(".gh-tour-optout")) return;
+                const box = document.createElement("label");
+                box.className = "gh-tour-optout";
+                box.innerHTML = '<input type="checkbox" id="gh-tour-optout"> Não mostrar novamente';
+                tooltip.appendChild(box);
+                const checkbox = box.querySelector("#gh-tour-optout");
+                checkbox.checked = isDisabled();
+                checkbox.addEventListener("change", function () {
+                    if (checkbox.checked) {
+                        localStorage.setItem(disableKey, "1");
+                    } else {
+                        localStorage.removeItem(disableKey);
+                    }
+                });
+            }
+
+            function createSteps() {
+                const candidates = [
+                    {
+                        selector: 'a[href="/dashboard/"]',
+                        intro: "Este menu lateral é a navegação principal da plataforma."
+                    },
+                    {
+                        selector: '#header-global-search-form',
+                        intro: "Aqui pode pesquisar rapidamente árbitros, exames e prestadores."
+                    },
+                    {
+                        selector: '#tour-new-exam-btn',
+                        intro: "Use este botão para criar um novo exame."
+                    },
+                    {
+                        selector: '#tour-metrics-row',
+                        intro: "Estes cartões mostram os indicadores principais do sistema."
+                    },
+                    {
+                        selector: '#tour-card-pendentes',
+                        intro: "Este cartão destaca os exames pendentes que precisam de atenção."
+                    },
+                    {
+                        selector: '#tour-certificacao',
+                        intro: "Aqui acompanha o status de certificação dos árbitros."
+                    },
+                    {
+                        selector: '#tour-proximos-exames',
+                        intro: "Esta tabela mostra os próximos exames agendados."
+                    },
+                    {
+                        selector: '#tour-alertas',
+                        intro: "Nesta área ficam os alertas de vencimento próximos."
+                    },
+                    {
+                        selector: '#user-menu-toggle',
+                        intro: "Neste menu do utilizador pode abrir o perfil, alterar senha e sair."
+                    }
+                ];
+                return candidates
+                    .map(function (item) {
+                        const el = document.querySelector(item.selector);
+                        if (!el) return null;
+                        return { element: el, intro: item.intro };
+                    })
+                    .filter(Boolean);
+            }
+
+            function startTour() {
+                const steps = createSteps();
+                if (!steps.length) return;
+
+                const intro = introJs();
+                intro.setOptions({
+                    steps: steps,
+                    nextLabel: "Avançar",
+                    prevLabel: "Voltar",
+                    doneLabel: "Concluir",
+                    skipLabel: "Pular",
+                    showProgress: true,
+                    showBullets: false,
+                    exitOnOverlayClick: false,
+                    disableInteraction: true
+                });
+                intro.onafterchange(ensureOptOutToggle);
+                intro.oncomplete(function () {
+                    localStorage.setItem(doneKey, "1");
+                });
+                intro.onexit(function () {
+                    localStorage.setItem(doneKey, "1");
+                });
+                intro.start();
+            }
+
+            if (forceStart) {
+                localStorage.removeItem(doneKey);
+                if (!isDisabled()) startTour();
+                return;
+            }
+            if (!isDisabled() && localStorage.getItem(doneKey) !== "1") {
+                startTour();
+            }
+        })();
+    </script>
+</body>
+</html>
+

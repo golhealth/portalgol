@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Dashboard de Associações | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar (Associações abaixo de Árbitros) -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen">
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8">
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold">Dashboard de Associações</h2>
+                    <p class="text-slate-500 dark:text-slate-400">Gestão de associações de futebol.</p>
+                </div>
+                <a href="{% url 'associacao:novo' %}" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors">
+                    <span class="material-icons-round text-sm">person_add</span>
+                    Nova Associação
+                </a>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
+                            <span class="material-icons-round">groups</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Associações</p>
+                    <h3 class="text-2xl font-bold mt-1">{{ total_associacoes }}</h3>
+                </div>
+
+                <div class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                            <span class="material-icons-round">verified</span>
+                        </div>
+                        <span class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Ativas</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Associações Ativas</p>
+                    <h3 class="text-2xl font-bold mt-1 text-primary">{{ associacoes_ativas }}</h3>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600">
+                            <span class="material-icons-round">remove_circle</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Inativas</p>
+                    <h3 class="text-2xl font-bold mt-1">{{ associacoes_inativas }}</h3>
+                </div>
+            </div>
+
+            <!-- Lista de Associações -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto mb-6">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Lista de Associações</h3>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                        {{ total_associacoes }} registos
+                    </span>
+                </div>
+                <div class="p-6">
+                    {% if associacoes %}
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left">
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Nome</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">NIF</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Estado</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for a in associacoes %}
+                                        <tr class="border-t border-slate-200 dark:border-slate-800">
+                                            <td class="py-3 font-medium">
+                                                <a href="{% url 'associacao:fatura_exames' a.pk %}" class="text-primary hover:underline">{{ a.nome_completo }}</a>
+                                            </td>
+                                            <td class="py-3">{{ a.nif }}</td>
+                                            <td class="py-3">
+                                                {% if a.estado == 'ativo' %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">Ativo</span>
+                                                {% elif a.estado == 'inativo' %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs font-semibold">Inativo</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold">{{ a.estado }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-3 text-right">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <a href="{% url 'associacao:detalhe' a.pk %}"
+                                                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                                                       title="Ver detalhes">
+                                                        <span class="material-icons-round text-base">visibility</span>
+                                                    </a>
+                                                    <a href="{% url 'associacao:editar' a.pk %}"
+                                                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                                                       title="Editar associação">
+                                                        <span class="material-icons-round text-base">edit</span>
+                                                    </a>
+                                                    <form method="post" action="{% url 'associacao:excluir' a.pk %}"
+                                                          onsubmit="return confirm('Tem certeza que deseja excluir esta associação?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit"
+                                                                class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-500/10 transition-colors"
+                                                                title="Excluir associação">
+                                                            <span class="material-icons-round text-base">delete</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">Ainda não existem associações registadas.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+</body>
+</html>
+

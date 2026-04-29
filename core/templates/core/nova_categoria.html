@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Nova Categoria | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"]
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+    <div class="max-w-3xl mx-auto p-8">
+        <div class="mb-6">
+            <a href="{% url 'arbitro:novo' %}" class="text-sm text-[#4c739a] hover:text-primary transition-colors flex items-center gap-2">
+                <span class="material-icons-round">chevron_left</span>
+                Voltar ao registo de Árbitro
+            </a>
+        </div>
+
+        <h1 class="text-3xl font-extrabold tracking-tight dark:text-white mb-2">Nova Categoria</h1>
+        <p class="text-[#4c739a] max-w-2xl">
+            Use este formulário para criar novas categorias que ficam disponíveis no registo de árbitros.
+        </p>
+
+        <form method="post" class="mt-6 space-y-6">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-bold text-[#4c739a] mb-2 uppercase tracking-wider">Nome</label>
+                {{ form.nome }}
+                {% if form.nome.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.nome.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-[#e7edf3] dark:border-slate-800">
+                <a href="{% url 'arbitro:novo' %}" class="px-6 py-3 rounded-lg text-[#4c739a] hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-colors">
+                    Cancelar
+                </a>
+                <button class="bg-primary hover:bg-primary/90 text-white px-10 py-3 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transform active:scale-95 transition-all" type="submit">
+                    <span class="material-icons-round">add</span>
+                    Guardar Categoria
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Editar consulta | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script>
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { primary: "#0d59f2", "background-light": "#f5f6f8", "background-dark": "#101622" }, fontFamily: { display: ["Lexend"] } } } };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+        {% include "core/partials/app_sidebar.html" %}
+
+    <main class="flex-1 ml-64 min-h-screen">
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8 max-w-2xl">
+            <p class="text-sm text-slate-500 mb-6">Árbitro: <span class="font-semibold text-slate-800 dark:text-slate-200">{{ marcacao.arbitro.nome_completo }}</span></p>
+
+            {% if edit_errors %}
+                <div class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 text-sm">
+                    <ul class="list-disc list-inside space-y-1">
+                        {% for err in edit_errors %}
+                            <li>{{ err }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% if form.non_field_errors %}
+                <div class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 text-sm text-red-800">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-6">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium mb-2">Prestador</label>
+                    {{ form.prestador }}
+                    {% if form.prestador.errors %}<p class="mt-1 text-xs text-red-600">{{ form.prestador.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Data e hora da consulta</label>
+                    {{ form.data_hora_consulta }}
+                    {% if form.data_hora_consulta.errors %}<p class="mt-1 text-xs text-red-600">{{ form.data_hora_consulta.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Exames (prestador)</label>
+                    <p class="text-xs text-slate-500 mb-2">Ao mudar o prestador, a lista de exames é atualizada.</p>
+                    <div id="editar-exames-container" class="max-h-48 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-2 bg-slate-50/60 dark:bg-slate-800/50">
+                        {% if exames_disponiveis %}
+                            {% for nome in exames_disponiveis %}
+                                <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                    <input type="checkbox" name="exames[]" value="{{ nome }}"
+                                           class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/40"
+                                           {% if nome in exames_marcados %}checked{% endif %}>
+                                    <span>{{ nome }}</span>
+                                </label>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-xs text-amber-600 dark:text-amber-400">Este prestador não tem exames configurados.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Observação</label>
+                    {{ form.observacao }}
+                    {% if form.observacao.errors %}<p class="mt-1 text-xs text-red-600">{{ form.observacao.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <a href="{{ voltar_url }}" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700">Cancelar</a>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+<script>
+(function () {
+    const prestadorEl = document.getElementById("id_prestador");
+    const container = document.getElementById("editar-exames-container");
+    if (!prestadorEl || !container) return;
+
+    function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    prestadorEl.addEventListener("change", async function () {
+        const id = this.value;
+        if (!id) {
+            container.innerHTML = '<p class="text-xs text-slate-500">Selecione um prestador.</p>';
+            return;
+        }
+        container.innerHTML = '<p class="text-xs text-slate-500">A carregar...</p>';
+        try {
+            const url = "{% url 'exames:prestador_exames_ajax' %}?prestador_id=" + encodeURIComponent(id);
+            const resp = await fetch(url, { credentials: "same-origin" });
+            const data = await resp.json().catch(function () { return {}; });
+            if (!resp.ok || !data.ok) {
+                container.innerHTML = '<p class="text-xs text-red-600">Erro ao carregar exames.</p>';
+                return;
+            }
+            const exames = data.exames || [];
+            if (!exames.length) {
+                container.innerHTML = '<p class="text-xs text-amber-600">Este prestador não tem exames configurados.</p>';
+                return;
+            }
+            container.innerHTML = "";
+            exames.forEach(function (nome) {
+                const lab = document.createElement("label");
+                lab.className = "flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200";
+                lab.innerHTML =
+                    '<input type="checkbox" name="exames[]" value="' +
+                    escapeHtml(nome).replace(/"/g, "&quot;") +
+                    '" class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/40">' +
+                    "<span>" +
+                    escapeHtml(nome) +
+                    "</span>";
+                container.appendChild(lab);
+            });
+        } catch (e) {
+            container.innerHTML = '<p class="text-xs text-red-600">Falha na comunicação.</p>';
+        }
+    });
+})();
+</script>
+</body>
+</html>

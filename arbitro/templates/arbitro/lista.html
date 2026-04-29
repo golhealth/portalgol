@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Lista de Árbitros | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"]
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main -->
+    <main class="flex-1 ml-64 min-h-screen">
+            {% url 'arbitro:lista' as arbitro_lista_url %}
+            {% include "core/partials/app_header.html" with header_search_action=arbitro_lista_url header_search_q=search_q header_preserve_ordenar=sort_col header_preserve_dir=sort_dir %}
+
+        <div class="p-8">
+            <div class="flex justify-between items-end mb-6 gap-4 flex-wrap">
+                <div class="min-w-0">
+                    <h2 class="text-2xl font-bold truncate">Lista de Árbitros</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm">Todos os árbitros registados na base de dados.</p>
+                    {% if search_q %}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Filtro ativo: <span class="font-medium text-slate-700 dark:text-slate-200">“{{ search_q }}”</span> · <a href="{% url 'arbitro:lista' %}{% if sort_col %}?ordenar={{ sort_col }}&amp;dir={{ sort_dir }}{% endif %}" class="text-primary hover:underline">Limpar</a></p>
+                    {% endif %}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Clique nos títulos <strong>Nome</strong>, <strong>Categoria</strong> ou <strong>Associação</strong> para ordenar (outro clique inverte). Clique nas células da tabela para filtrar.</p>
+                </div>
+                <a href="{% url 'arbitro:dashboard' %}" class="text-sm text-[#4c739a] hover:text-primary transition-colors flex items-center gap-2">
+                    <span class="material-icons-round text-base">chevron_left</span>
+                    Voltar
+                </a>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Registos</h3>
+                </div>
+                <div class="p-6">
+                    {% if arbitros %}
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left">
+                                        <th class="pb-3 text-slate-600 dark:text-slate-300">
+                                            <a href="{% url 'arbitro:lista' %}?{{ sort_qs_nome }}" class="inline-flex items-center gap-1 font-semibold hover:text-primary transition-colors {% if sort_col == 'nome' %}text-primary{% endif %}" title="Ordenar por nome">
+                                                Nome
+                                                {% if sort_col == 'nome' %}
+                                                    <span class="material-icons-round text-base leading-none" aria-hidden="true">{% if sort_dir == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th class="pb-3 text-slate-600 dark:text-slate-300">
+                                            <a href="{% url 'arbitro:lista' %}?{{ sort_qs_categoria }}" class="inline-flex items-center gap-1 font-semibold hover:text-primary transition-colors {% if sort_col == 'categoria' %}text-primary{% endif %}" title="Ordenar por categoria">
+                                                Categoria
+                                                {% if sort_col == 'categoria' %}
+                                                    <span class="material-icons-round text-base leading-none" aria-hidden="true">{% if sort_dir == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th class="pb-3 text-slate-600 dark:text-slate-300">
+                                            <a href="{% url 'arbitro:lista' %}?{{ sort_qs_associacao }}" class="inline-flex items-center gap-1 font-semibold hover:text-primary transition-colors {% if sort_col == 'associacao' %}text-primary{% endif %}" title="Ordenar por associação">
+                                                Associação
+                                                {% if sort_col == 'associacao' %}
+                                                    <span class="material-icons-round text-base leading-none" aria-hidden="true">{% if sort_dir == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Ativo</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for a in arbitros %}
+                                        <tr class="border-t border-slate-200 dark:border-slate-800">
+                                            <td class="py-3">
+                                                <a href="{% url 'arbitro:lista' %}?q={{ a.nome_completo|urlencode }}{{ sort_preserve_suffix }}" class="text-slate-900 dark:text-slate-100 hover:text-primary dark:hover:text-primary hover:underline font-medium" title="Filtrar por este nome">{{ a.nome_completo }}</a>
+                                            </td>
+                                            <td class="py-3">
+                                                {% if a.categoria %}
+                                                    <a href="{% url 'arbitro:lista' %}?q={{ a.categoria.nome|urlencode }}{{ sort_preserve_suffix }}" class="text-slate-700 dark:text-slate-300 hover:text-primary hover:underline" title="Filtrar por esta categoria">{{ a.categoria.nome }}</a>
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-3">
+                                                {% if a.associacao_futebol %}
+                                                    <a href="{% url 'arbitro:lista' %}?q={{ a.associacao_futebol.nome_completo|urlencode }}{{ sort_preserve_suffix }}" class="text-slate-700 dark:text-slate-300 hover:text-primary hover:underline" title="Filtrar por esta associação">{{ a.associacao_futebol.nome_completo }}</a>
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-3">
+                                                {% if a.ativo %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">Sim</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs font-semibold">Não</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-3 text-right">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <a href="{% url 'arbitro:detalhe' a.pk %}"
+                                                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                                                       title="Ver detalhes">
+                                                        <span class="material-icons-round text-base">visibility</span>
+                                                    </a>
+                                                    <a href="{% url 'arbitro:editar' a.pk %}"
+                                                       class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                                                       title="Editar">
+                                                        <span class="material-icons-round text-base">edit</span>
+                                                    </a>
+                                                    <form method="post" action="{% url 'arbitro:excluir' a.pk %}"
+                                                          onsubmit="return confirm('Tem certeza que deseja excluir este árbitro?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit"
+                                                                class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-500/10 transition-colors"
+                                                                title="Excluir">
+                                                            <span class="material-icons-round text-base">delete</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        {% if search_q %}
+                            <p class="text-slate-600 dark:text-slate-400">Nenhum árbitro encontrado para "{{ search_q }}". <a href="{% url 'arbitro:lista' %}{% if sort_col %}?ordenar={{ sort_col }}&amp;dir={{ sort_dir }}{% endif %}" class="text-primary font-medium hover:underline">Limpar pesquisa</a></p>
+                        {% else %}
+                            <p class="text-slate-600 dark:text-slate-400">Ainda não existem árbitros registados.</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+(function () {
+    var menu = document.getElementById('user-menu');
+    var toggle = document.getElementById('user-menu-toggle');
+    if (!menu || !toggle) return;
+    toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function (e) {
+        if (!menu.classList.contains('hidden')) {
+            if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+    });
+})();
+</script>
+</body>
+</html>
+

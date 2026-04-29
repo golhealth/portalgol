@@ -1,0 +1,346 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Dashboard da Época | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen">
+        <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8">
+            <div class="flex justify-between items-end mb-6 gap-4">
+                <div class="min-w-0">
+                    <h2 class="text-2xl font-bold truncate">Dashboard da Época</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm">Gestão de associações e árbitros para esta época.</p>
+                </div>
+                <a href="{% url 'exames:dashboard' %}"
+                   class="text-sm text-[#4c739a] hover:text-primary transition-colors flex items-center gap-2">
+                    <span class="material-icons-round text-base">chevron_left</span>
+                    Voltar
+                </a>
+            </div>
+
+            <!-- Linha com detalhes da época -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-2.5 h-2.5 rounded-full {% if epoca.ativo %}bg-primary{% else %}bg-amber-400{% endif %}"></div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Nome</p>
+                            <h3 class="text-xl font-bold text-slate-900 dark:text-white truncate">{{ epoca.nome }}</h3>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        {% if epoca.ativo %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider">
+                                Ativa
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+                                Inativa
+                            </span>
+                        {% endif %}
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                            {% if epoca.inicio_data %}Início: {{ epoca.inicio_data }}{% endif %}
+                            {% if epoca.inicio_data and epoca.fim_data %} · {% endif %}
+                            {% if epoca.fim_data %}Fim: {{ epoca.fim_data }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <form method="post" class="flex flex-wrap items-center justify-between gap-4">
+                        {% csrf_token %}
+                        <div class="flex items-center gap-3">
+                            {{ form.ativo }}
+                            <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Marcar como ativa</span>
+                        </div>
+                        <button type="submit"
+                                class="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all">
+                            <span class="material-icons-round text-base">verified</span>
+                            Atualizar estado
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Associações -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto mb-6">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Associações</h3>
+                    <button
+                        type="button"
+                        id="btn-add-associacao"
+                        class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
+                    >
+                        <span class="material-icons-round text-base">person_add</span>
+                        Adicionar Associação
+                    </button>
+                </div>
+                <div class="p-6">
+                    {% if associacoes %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% for a in associacoes %}
+                                <a href="{% url 'core:epoca_associacao_arbitros' epoca.pk a.pk %}"
+                                   class="px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ a.nome_completo }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                                Exames/Atos: {{ a.exames_count|default:0 }}
+                                            </p>
+                                        </div>
+                                        {% if a.estado == 'ativo' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider">
+                                                Ativo
+                                            </span>
+                                        {% elif a.estado == 'inativo' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+                                                Inativo
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-bold uppercase tracking-wider">
+                                                {{ a.estado }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">Ainda não existem associações registadas.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Árbitros -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Árbitros</h3>
+                    <a href="{% url 'arbitro:novo' %}"
+                       class="text-sm text-[#4c739a] hover:text-primary transition-colors flex items-center gap-2">
+                        <span class="material-icons-round text-base">add</span>
+                        Adicionar Árbitro
+                    </a>
+                </div>
+                <div class="p-6">
+                    {% if arbitros %}
+                        <div class="space-y-3">
+                            {% for b in arbitros %}
+                                <div class="flex items-start justify-between gap-4 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ b.nome_completo }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                            Categoria: {{ b.categoria.nome|default:"—" }} · Modalidade: {{ b.modalidade.nome|default:"—" }}
+                                        </p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                                            Associação: {{ b.associacao_futebol.nome_completo|default:"—" }}
+                                        </p>
+                                    </div>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider">
+                                        Ativo
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">Ainda não existem árbitros ativos registados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+
+<!-- Modal: adicionar associação à época -->
+<div id="modal-add-associacao" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Adicionar Associação</h3>
+            <button type="button" id="btn-close-add-associacao" class="text-slate-500 hover:text-primary transition-colors">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+
+        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">
+            Selecione a associação que deve ser registada para esta época.
+        </p>
+
+        <form
+            id="form-add-associacao"
+            method="post"
+            action="{% url 'core:epoca_associacao_add_ajax' epoca.pk %}"
+            class="space-y-4"
+        >
+            {% csrf_token %}
+            <div>
+                <label for="associacao_id" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Associação
+                </label>
+                <select
+                    id="associacao_id"
+                    name="associacao_id"
+                    class="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm"
+                >
+                    <option value="">-- Selecione --</option>
+                    {% if associacoes_disponiveis %}
+                        {% for a in associacoes_disponiveis %}
+                            <option value="{{ a.pk }}">{{ a.nome_completo }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <div id="epoca-associacao-error" class="hidden text-sm text-red-600">
+                Erro ao adicionar associação à época.
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" id="btn-cancel-add-associacao"
+                        class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                        class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all">
+                    <span class="material-icons-round text-base">add</span>
+                    Adicionar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById("modal-add-associacao");
+        const btnOpen = document.getElementById("btn-add-associacao");
+        const btnClose = document.getElementById("btn-close-add-associacao");
+        const btnCancel = document.getElementById("btn-cancel-add-associacao");
+        const form = document.getElementById("form-add-associacao");
+        const errorBox = document.getElementById("epoca-associacao-error");
+
+        if (!modal || !btnOpen || !btnClose || !btnCancel || !form) return;
+
+        function openModal() {
+            errorBox.classList.add("hidden");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        btnOpen.addEventListener("click", openModal);
+        btnClose.addEventListener("click", closeModal);
+        btnCancel.addEventListener("click", closeModal);
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            errorBox.classList.add("hidden");
+
+            const fd = new FormData(form);
+            const associacaoId = fd.get("associacao_id");
+            if (!associacaoId) {
+                errorBox.textContent = "Selecione uma associação antes de adicionar.";
+                errorBox.classList.remove("hidden");
+                return;
+            }
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: "POST",
+                    body: fd,
+                    headers: { "X-Requested-With": "fetch" },
+                    credentials: "same-origin",
+                });
+                const payload = await resp.json().catch(() => ({}));
+                if (!resp.ok || !payload.ok) {
+                    errorBox.textContent = (payload && payload.error) ? payload.error : "Erro ao adicionar associação à época.";
+                    errorBox.classList.remove("hidden");
+                    return;
+                }
+
+                closeModal();
+                window.location.reload();
+            } catch (err) {
+                errorBox.textContent = "Falha de comunicação ao adicionar associação.";
+                errorBox.classList.remove("hidden");
+            }
+        });
+    })();
+</script>
+</body>
+</html>
+

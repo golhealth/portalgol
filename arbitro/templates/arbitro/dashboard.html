@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Dashboard de Árbitros | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+    <div class="flex min-h-screen">
+        <!-- Sidebar (igual à dashboard principal, com Árbitros selecionado) -->
+        {% include "core/partials/app_sidebar.html" %}
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 min-h-screen">
+            <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+            <div class="p-8">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold">Dashboard de Árbitros</h2>
+                        <p class="text-slate-500 dark:text-slate-400">Gestão completa de árbitros e categorias.</p>
+                    </div>
+                    <a href="{% url 'arbitro:novo' %}" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors">
+                        <span class="material-icons-round text-sm">person_add</span>
+                        Novo Árbitro
+                    </a>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
+                                <span class="material-icons-round">groups</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Árbitros</p>
+                        <h3 class="text-2xl font-bold mt-1">{{ total_arbitros }}</h3>
+                    </div>
+
+                    <div class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                                <span class="material-icons-round">verified</span>
+                            </div>
+                            <span class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Ativo</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Árbitros Ativos</p>
+                        <h3 class="text-2xl font-bold mt-1 text-primary">{{ arbitros_ativos }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600">
+                                <span class="material-icons-round">event</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Exames Pendentes</p>
+                        <h3 class="text-2xl font-bold mt-1">{{ exames_pendentes }}</h3>
+                    </div>
+                </div>
+
+                <!-- Ações rápidas e estatísticas por categoria -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-4">Ações Rápidas</h3>
+                        <div class="space-y-2">
+                            <a href="{% url 'arbitro:novo' %}" class="flex items-center gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                                <span class="material-icons-round text-primary text-[22px]">person_add</span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-semibold text-sm text-slate-900 dark:text-white">Registar Novo Árbitro</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Adicionar um novo profissional à base de dados</p>
+                                </div>
+                            </a>
+                            <a href="{% url 'arbitro:lista' %}" class="flex items-center gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                                <span class="material-icons-round text-primary text-[22px]">list</span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-semibold text-sm text-slate-900 dark:text-white">Ver Lista Completa</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Visualizar todos os árbitros registados</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                        <h3 class="font-bold text-lg text-slate-900 dark:text-white mb-4">Estatísticas por Categoria</h3>
+                        <div>
+                            {% if categorias_stats %}
+                                <div class="space-y-3">
+                                    {% for stat in categorias_stats %}
+                                    <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50/50 dark:bg-slate-800/30">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-primary"></span>
+                                            <span class="text-sm text-slate-700 dark:text-slate-300 font-medium truncate">{{ stat.nome }}</span>
+                                        </div>
+                                        <span class="text-sm font-bold text-slate-900 dark:text-white ml-2 flex-shrink-0">{{ stat.count }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400 text-sm">
+                                    Nenhuma categoria registada.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        (function () {
+            const menu = document.getElementById('user-menu');
+            const toggle = document.getElementById('user-menu-toggle');
+            if (!menu || !toggle) return;
+
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!menu.classList.contains('hidden')) {
+                    if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                        menu.classList.add('hidden');
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
+

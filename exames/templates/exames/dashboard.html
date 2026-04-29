@@ -1,0 +1,563 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Dashboard de Atos Médicos | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen">
+        <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8">
+                <div class="flex justify-between items-end mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold">Dashboard de Exames</h2>
+                    <p class="text-slate-500 dark:text-slate-400">Gestão de atos médicos registados na plataforma.</p>
+                    {% if epoca_atual %}
+                        <div class="mt-3 flex flex-wrap gap-2 items-center">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                                <span class="material-icons-round text-[14px]">event</span>
+                                Época ativa: {{ epoca_atual.nome }}
+                            </span>
+                            {% if epoca_atual.inicio_data or epoca_atual.fim_data %}
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
+                                    {% if epoca_atual.inicio_data %}Início: {{ epoca_atual.inicio_data }}{% endif %}
+                                    {% if epoca_atual.inicio_data and epoca_atual.fim_data %} · {% endif %}
+                                    {% if epoca_atual.fim_data %}Fim: {{ epoca_atual.fim_data }}{% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+                            Não existe uma época ativa definida.
+                        </p>
+                    {% endif %}
+                </div>
+                    <div class="flex items-center gap-4 flex-wrap">
+                        <a
+                            href="{% url 'exames:exames_marcados' %}"
+                            class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
+                        >
+                            <span class="material-icons-round text-sm text-primary">playlist_add_check</span>
+                            Exames marcados
+                        </a>
+                        <a
+                            href="{% url 'exames:marcar_exames' %}"
+                            class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-lg shadow-emerald-700/20"
+                        >
+                            <span class="material-icons-round text-sm">event_available</span>
+                            Marcar Exame
+                        </a>
+                        <button
+                            type="button"
+                            id="btn-nova-epoca"
+                            class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-lg shadow-slate-900/20"
+                        >
+                            <span class="material-icons-round text-sm">event</span>
+                            Nova Época
+                        </button>
+                        <button
+                            type="button"
+                            id="btn-novo-ato-medico"
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-lg shadow-primary/20"
+                        >
+                            <span class="material-icons-round text-sm">add</span>
+                            Novo Ato Médico
+                        </button>
+                    </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600">
+                            <span class="material-icons-round">assignment</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Atos Médicos</p>
+                    <h3 class="text-2xl font-bold mt-1">{{ total_exames }}</h3>
+                </div>
+
+                <div class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                            <span class="material-icons-round">verified</span>
+                        </div>
+                        <span class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Ativo</span>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Atos Médicos Ativos</p>
+                    <h3 class="text-2xl font-bold mt-1 text-primary">{{ exames_ativos }}</h3>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600">
+                            <span class="material-icons-round">block</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Atos Médicos Inativos</p>
+                    <h3 class="text-2xl font-bold mt-1">{{ exames_inativos }}</h3>
+                </div>
+            </div>
+
+            <!-- Épocas -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto mb-6">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Épocas</h3>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">Registos disponíveis</span>
+                </div>
+                <div class="p-6">
+                    {% if epocas %}
+                        <div class="flex flex-wrap gap-3">
+                            {% for e in epocas %}
+                                <a href="{% url 'core:epoca_detalhe' e.pk %}"
+                                   class="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <div class="w-2.5 h-2.5 rounded-full {% if e.ativo %}bg-primary{% else %}bg-amber-400{% endif %}"></div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ e.nome }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                                            {% if e.inicio_data %}Início: {{ e.inicio_data }}{% endif %}
+                                            {% if e.inicio_data and e.fim_data %} · {% endif %}
+                                            {% if e.fim_data %}Fim: {{ e.fim_data }}{% endif %}
+                                        </p>
+                                    </div>
+                                    {% if e.ativo %}
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold uppercase tracking-wider">
+                                            Ativa
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+                                            Inativa
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">Ainda não existem épocas registadas.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Lista de Atos Médicos</h3>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Atos médicos disponíveis para serem selecionados no registo de associações.</p>
+                </div>
+                <div class="p-6">
+                    {% if exams %}
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="text-left">
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Nome</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Ativo</th>
+                                        <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for e in exams %}
+                                        <tr class="border-t border-slate-200 dark:border-slate-800">
+                                            <td class="py-3">{{ e.nome }}</td>
+                                            <td class="py-3">
+                                                {% if e.ativo %}
+                                                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">Sim</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 text-xs font-semibold">Não</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-3 text-right">
+                                                <a href="{% url 'exames:editar' e.pk %}"
+                                                   class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                                                   title="Editar ato médico">
+                                                    <span class="material-icons-round text-base">edit</span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-slate-600 dark:text-slate-400">Ainda não existem atos médicos registados.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal: Novo Ato Médico -->
+<div id="modal-novo-ato-medico" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Novo Ato Médico</h3>
+            <button type="button" id="btn-close-novo-ato-medico" class="text-slate-500 hover:text-primary transition-colors">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+
+        <form
+            id="form-novo-ato-medico"
+            method="post"
+            action="{% url 'exames:novo_ato_ajax' %}"
+            class="space-y-4"
+        >
+            {% csrf_token %}
+            <div>
+                <label for="id_nome" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                    Nome do Ato Médico
+                </label>
+                <input
+                    id="id_nome"
+                    name="nome"
+                    type="text"
+                    placeholder="Ex: Cardiológico"
+                    class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"
+                />
+                <div id="ato-erro-nome" class="hidden mt-2 text-xs text-red-600"></div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <input
+                    id="id_ativo"
+                    name="ativo"
+                    type="checkbox"
+                    value="on"
+                    checked
+                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/50"
+                />
+                <label for="id_ativo" class="text-sm text-slate-600 dark:text-slate-300">
+                    Ato médico ativo
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button
+                    type="button"
+                    id="btn-cancel-novo-ato-medico"
+                    class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="submit"
+                    class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all"
+                >
+                    <span class="material-icons-round text-base">save</span>
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const modal = document.getElementById("modal-novo-ato-medico");
+        const btnOpen = document.getElementById("btn-novo-ato-medico");
+        const btnClose = document.getElementById("btn-close-novo-ato-medico");
+        const btnCancel = document.getElementById("btn-cancel-novo-ato-medico");
+        const form = document.getElementById("form-novo-ato-medico");
+        const errorNome = document.getElementById("ato-erro-nome");
+        const inputNome = document.getElementById("id_nome");
+
+        if (!modal || !btnOpen || !btnClose || !btnCancel || !form || !errorNome || !inputNome) return;
+
+        function openModal() {
+            errorNome.classList.add("hidden");
+            errorNome.textContent = "";
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            inputNome.focus();
+        }
+
+        function closeModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        btnOpen.addEventListener("click", openModal);
+        btnClose.addEventListener("click", closeModal);
+        btnCancel.addEventListener("click", closeModal);
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            errorNome.classList.add("hidden");
+            errorNome.textContent = "";
+
+            const fd = new FormData(form);
+            // Django boolean via checkbox: se desmarcado, não vai existir no FormData.
+            if (!fd.get("ativo")) fd.set("ativo", "");
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: "POST",
+                    body: fd,
+                    headers: { "X-Requested-With": "fetch" },
+                    credentials: "same-origin",
+                });
+                const payload = await resp.json().catch(() => ({}));
+
+                if (!resp.ok || !payload.ok) {
+                    const nomeErrs = payload.errors && payload.errors.nome ? payload.errors.nome : null;
+                    if (nomeErrs && nomeErrs.length) {
+                        errorNome.textContent = nomeErrs[0];
+                    } else if (payload.error) {
+                        errorNome.textContent = payload.error;
+                    } else {
+                        errorNome.textContent = "Erro ao guardar ato médico.";
+                    }
+                    errorNome.classList.remove("hidden");
+                    return;
+                }
+
+                closeModal();
+                window.location.reload();
+            } catch (err) {
+                errorNome.textContent = "Falha de comunicação ao guardar ato médico.";
+                errorNome.classList.remove("hidden");
+            }
+        });
+    })();
+</script>
+
+<!-- Modal: Nova Época -->
+<div id="modal-nova-epoca" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Nova Época</h3>
+            <button type="button" id="btn-close-nova-epoca" class="text-slate-500 hover:text-primary transition-colors">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+
+        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">
+            Defina nome e datas. Ao marcar como ativa, o sistema desativa as outras épocas automaticamente.
+        </p>
+
+        <form
+            id="form-nova-epoca"
+            method="post"
+            action="{% url 'core:epoca_novo_ajax' %}"
+            class="space-y-4"
+        >
+            {% csrf_token %}
+
+            <div>
+                <label for="id_nome_epoca" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                    Nome da época
+                </label>
+                <input
+                    id="id_nome_epoca"
+                    name="nome"
+                    type="text"
+                    placeholder="Ex: 2026 / Temporada"
+                    class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"
+                />
+                <div id="epoca-erro-nome" class="hidden mt-2 text-xs text-red-600"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="id_inicio_data" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                        Início
+                    </label>
+                    <input
+                        id="id_inicio_data"
+                        name="inicio_data"
+                        type="date"
+                        class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"
+                    />
+                </div>
+                <div>
+                    <label for="id_fim_data" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                        Fim
+                    </label>
+                    <input
+                        id="id_fim_data"
+                        name="fim_data"
+                        type="date"
+                        class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"
+                    />
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <input
+                    id="id_ativo_epoca"
+                    name="ativo"
+                    type="checkbox"
+                    value="on"
+                    checked
+                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/50"
+                />
+                <label for="id_ativo_epoca" class="text-sm text-slate-600 dark:text-slate-300">
+                    Época ativa
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button
+                    type="button"
+                    id="btn-cancel-nova-epoca"
+                    class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="submit"
+                    class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all"
+                >
+                    <span class="material-icons-round text-base">verified</span>
+                    Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById("modal-nova-epoca");
+        const btnOpen = document.getElementById("btn-nova-epoca");
+        const btnClose = document.getElementById("btn-close-nova-epoca");
+        const btnCancel = document.getElementById("btn-cancel-nova-epoca");
+        const form = document.getElementById("form-nova-epoca");
+        const errorNome = document.getElementById("epoca-erro-nome");
+        const inputNome = document.getElementById("id_nome_epoca");
+
+        if (!modal || !btnOpen || !btnClose || !btnCancel || !form || !errorNome || !inputNome) return;
+
+        function openModal() {
+            errorNome.classList.add("hidden");
+            errorNome.textContent = "";
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            inputNome.focus();
+        }
+
+        function closeModal() {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        btnOpen.addEventListener("click", openModal);
+        btnClose.addEventListener("click", closeModal);
+        btnCancel.addEventListener("click", closeModal);
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            errorNome.classList.add("hidden");
+            errorNome.textContent = "";
+
+            const fd = new FormData(form);
+            if (!fd.get("ativo")) fd.set("ativo", "");
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: "POST",
+                    body: fd,
+                    headers: { "X-Requested-With": "fetch" },
+                    credentials: "same-origin",
+                });
+                const payload = await resp.json().catch(() => ({}));
+
+                if (!resp.ok || !payload.ok) {
+                    const nomeErrs = payload.errors && payload.errors.nome ? payload.errors.nome : null;
+                    if (nomeErrs && nomeErrs.length) {
+                        errorNome.textContent = nomeErrs[0];
+                    } else if (payload.error) {
+                        errorNome.textContent = payload.error;
+                    } else {
+                        errorNome.textContent = "Erro ao guardar época.";
+                    }
+                    errorNome.classList.remove("hidden");
+                    return;
+                }
+
+                closeModal();
+                window.location.reload();
+            } catch (err) {
+                errorNome.textContent = "Falha de comunicação ao guardar época.";
+                errorNome.classList.remove("hidden");
+            }
+        });
+    })();
+</script>
+</body>
+</html>
+

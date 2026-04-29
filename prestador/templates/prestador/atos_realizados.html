@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-PT">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Atos realizados — {{ prestador.nome_completo }} | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: { display: ["Lexend"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    {% include "core/partials/app_sidebar.html" %}
+    <main class="flex-1 ml-64 min-h-screen">
+        {% include "core/partials/app_header.html" %}
+        <div class="p-8">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
+                <div class="min-w-0">
+                    <h2 class="text-2xl font-bold">Atos realizados no prestador</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">{{ prestador.nome_completo }} · NIF {{ prestador.nif }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-2xl">Valores calculados a partir dos exames indicados em cada registo e da tabela de preços do prestador. Se um ato não tiver preço configurado, aparece como pendente.</p>
+                </div>
+                <a href="{% url 'prestador:lista' %}" class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors flex items-center gap-2 shrink-0">
+                    <span class="material-icons-round text-base">chevron_left</span>
+                    Voltar à lista
+                </a>
+            </div>
+
+            {% if resumo_arbitros %}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-6 mb-8">
+                <h3 class="font-bold text-lg mb-4 text-slate-900 dark:text-white">Total a pagar por árbitro</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left border-b border-slate-200 dark:border-slate-700">
+                                <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Árbitro</th>
+                                <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Associação</th>
+                                <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Subtotal (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in resumo_arbitros %}
+                            <tr class="border-t border-slate-100 dark:border-slate-800">
+                                <td class="py-3 font-medium">{{ r.arbitro.nome_completo }}</td>
+                                <td class="py-3 text-slate-600 dark:text-slate-400">{{ r.associacao.nome_completo|default:"—" }}</td>
+                                <td class="py-3 text-right font-semibold tabular-nums">{{ r.total|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="border-t-2 border-slate-200 dark:border-slate-700 font-bold">
+                                <td colspan="2" class="pt-3 text-slate-900 dark:text-white">Total geral</td>
+                                <td class="pt-3 text-right tabular-nums text-primary">{{ total_geral|floatformat:2 }} €</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white">Detalhe das realizações</h3>
+                </div>
+                <div class="p-6">
+                    {% if tem_realizacoes %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left">
+                                    <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Data</th>
+                                    <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Árbitro</th>
+                                    <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Associação</th>
+                                    <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Atos</th>
+                                    <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300">Valores (€)</th>
+                                    <th class="pb-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Linha (€)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for linha in linhas %}
+                                <tr class="border-t border-slate-200 dark:border-slate-800 align-top">
+                                    <td class="py-3 whitespace-nowrap">{{ linha.realizacao.data_realizacao|date:"d/m/Y" }}</td>
+                                    <td class="py-3 font-medium">{{ linha.arbitro.nome_completo }}</td>
+                                    <td class="py-3 text-slate-600 dark:text-slate-400">{{ linha.associacao.nome_completo|default:"—" }}</td>
+                                    <td class="py-3 max-w-xs">
+                                        <p class="text-slate-900 dark:text-white">{{ linha.atos_display }}</p>
+                                        {% if linha.realizacao.observacoes %}
+                                        <p class="text-xs text-slate-500 mt-1">{{ linha.realizacao.observacoes|truncatechars:120 }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3">
+                                        {% if linha.detalhes %}
+                                        <ul class="space-y-1 text-xs">
+                                            {% for d in linha.detalhes %}
+                                            <li>
+                                                {{ d.nome }}
+                                                {% if d.sem_preco %}
+                                                <span class="text-amber-600">(sem preço)</span>
+                                                {% else %}
+                                                — {{ d.valor|floatformat:2 }} €
+                                                {% endif %}
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% else %}
+                                        <span class="text-slate-500 text-xs">Sem lista de atos — valor não aplicável pela tabela</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 text-right font-semibold tabular-nums">{{ linha.subtotal|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-slate-600 dark:text-slate-400">Ainda não há exames carregados (realizações) associados a este prestador. Quando carregar exames na ficha do árbitro com este prestador, os valores aparecerão aqui.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+(function () {
+    var menu = document.getElementById('user-menu');
+    var toggle = document.getElementById('user-menu-toggle');
+    if (!menu || !toggle) return;
+    toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function (e) {
+        if (!menu.classList.contains('hidden')) {
+            if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+    });
+})();
+</script>
+</body>
+</html>

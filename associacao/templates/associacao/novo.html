@@ -1,0 +1,602 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Registo de Associação | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        input:focus, select:focus, textarea:focus { border-color: #137fec !important; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <!-- Main -->
+    <main class="flex-1 ml-64 flex flex-col min-h-screen">
+            {% include "core/partials/app_header.html" %}
+
+        <div class="p-8 flex-1">
+            <header class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight text-primary">Registro de Associação</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Gestão das associações de futebol Gol Health</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'associacao:dashboard' %}"
+                       class="px-4 py-2 text-sm font-medium border border-slate-200 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        Cancelar
+                    </a>
+                </div>
+            </header>
+
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for message in messages %}
+                        <div class="p-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+
+                <!-- Informações Gerais -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8">
+                    <h2 class="text-xl font-semibold mb-8 flex items-center gap-2">
+                        <span class="material-icons-round text-primary">person</span>
+                        Informações Gerais
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nome Completo</label>
+                            {{ form.nome_completo }}
+                            {% if form.nome_completo.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.nome_completo.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">NIF</label>
+                            {{ form.nif }}
+                            {% if form.nif.errors %}
+                                <p class="mt-1 text-xs text-red-600">{{ form.nif.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                            <div class="p-4 border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 block">Início do Protocolo</span>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data</label>
+                                        {{ form.inicio_protocolo_data }}
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hora</label>
+                                        {{ form.inicio_protocolo_hora }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-lg">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 block">Fim do Protocolo</span>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data</label>
+                                        {{ form.fim_protocolo_data }}
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hora</label>
+                                        {{ form.fim_protocolo_hora }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-3 pt-4">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-4">Estado de Atividade</label>
+                            <div class="flex flex-wrap gap-6">
+                                {{ form.estado }}
+                            </div>
+                        </div>
+
+                        <!-- Removido: Avença / Conformidade -->
+                    </div>
+                </section>
+
+                <!-- Atos médicos e Valores -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8">
+                    <div class="mb-8 flex items-center justify-between gap-3">
+                        <h2 class="text-xl font-semibold flex items-center gap-2">
+                            <span class="material-icons-round text-primary">assignment</span>
+                            Atos médicos e Valores
+                        </h2>
+                        <button
+                            type="button"
+                            id="open-ato-modal"
+                            class="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            <span class="material-icons-round text-primary text-base">add_circle</span>
+                            Novo ato médico
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        {{ exames.management_form }}
+                        <div id="exames-container" class="space-y-4">
+                            {% for f in exames %}
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 exame-row">
+                                    <div class="md:col-span-7">
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ato médico</label>
+                                        {{ f.exame_nome }}
+                                        {% if f.exame_nome.errors %}
+                                            <p class="mt-1 text-xs text-red-600">{{ f.exame_nome.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Valor</label>
+                                        {{ f.valor }}
+                                        {% if f.valor.errors %}
+                                            <p class="mt-1 text-xs text-red-600">{{ f.valor.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="md:col-span-2 flex items-start justify-end pt-7 gap-2">
+                                        <button type="button" class="edit-exame p-2 text-slate-400 hover:text-primary transition-colors">
+                                            <span class="material-icons-round">edit</span>
+                                        </button>
+                                        <button type="button" class="remove-exame p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                            <span class="material-icons-round">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="button" id="add-exame"
+                                    class="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2">
+                                <span class="material-icons-round text-primary">add_circle</span>
+                                Adicionar Ato Médico
+                            </button>
+                        </div>
+                    </div>
+
+                    <template id="exame-row-template">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 exame-row">
+                            <div class="md:col-span-7">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ato médico</label>
+                                {{ exames.empty_form.exame_nome }}
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Valor</label>
+                                {{ exames.empty_form.valor }}
+                            </div>
+                            <div class="md:col-span-2 flex items-start justify-end pt-7 gap-2">
+                                <button type="button" class="edit-exame p-2 text-slate-400 hover:text-primary transition-colors">
+                                    <span class="material-icons-round">edit</span>
+                                </button>
+                                <button type="button" class="remove-exame p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                    <span class="material-icons-round">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </section>
+
+                <!-- Morada -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8">
+                    <h2 class="text-xl font-semibold mb-8 flex items-center gap-2">
+                        <span class="material-icons-round text-primary">location_on</span>
+                        Morada
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Código Postal</label>
+                            {{ form.codigo_postal }}
+                        </div>
+                        <div class="md:col-span-3">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Rua / Avenida</label>
+                            {{ form.rua_avenida }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Número da Porta</label>
+                            {{ form.numero }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Complemento</label>
+                            {{ form.complemento }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Localidade</label>
+                            {{ form.localidade }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Concelho</label>
+                            {{ form.concelho }}
+                        </div>
+                        <div class="md:col-span-4">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Distrito</label>
+                            {{ form.distrito }}
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Contactos -->
+                <section class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 md:p-8">
+                    <h2 class="text-xl font-semibold mb-8 flex items-center gap-2">
+                        <span class="material-icons-round text-primary">contact_mail</span>
+                        Contactos
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Responsável</label>
+                            {{ form.responsavel }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Telefone</label>
+                            {{ form.telefone }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">E-mail</label>
+                            {{ form.email }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Fax</label>
+                            {{ form.fax }}
+                        </div>
+                    </div>
+                </section>
+
+                <div class="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <button type="submit"
+                            class="px-8 py-3 bg-primary text-white font-bold rounded-lg shadow-xl shadow-primary/30 hover:brightness-110 active:scale-95 transition-all flex items-center gap-3">
+                        <span class="material-icons-round">save</span>
+                        Registar Nova Associação
+                        <span class="material-icons-round">chevron_right</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<div id="ato-modal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/40" id="ato-modal-backdrop"></div>
+    <div class="absolute inset-0 p-4 flex items-center justify-center">
+        <div class="w-full max-w-md rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl">
+            <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h4 class="text-lg font-bold text-slate-900 dark:text-white">Novo ato médico</h4>
+                <button type="button" id="ato-modal-close" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <span class="material-icons-round text-slate-500">close</span>
+                </button>
+            </div>
+            <form id="ato-form" class="p-5 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="ato-nome" class="block text-sm font-medium mb-1.5">Nome do ato médico</label>
+                    <input
+                        id="ato-nome"
+                        name="nome"
+                        type="text"
+                        required
+                        placeholder="Ex: Cardiológico"
+                        class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"
+                    />
+                    <p id="ato-form-error" class="hidden mt-1 text-xs text-red-600"></p>
+                </div>
+                <input type="hidden" name="ativo" value="on"/>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" id="ato-modal-cancel" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary/90">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const menu = document.getElementById('user-menu');
+        const toggle = document.getElementById('user-menu-toggle');
+        if (!menu || !toggle) return;
+
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!menu.classList.contains('hidden')) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            }
+        });
+    })();
+</script>
+<script>
+    (function () {
+        const addBtn = document.getElementById('add-exame');
+        const container = document.getElementById('exames-container');
+        const totalForms = document.getElementById('id_exames-TOTAL_FORMS');
+        const template = document.getElementById('exame-row-template');
+
+        if (!addBtn || !container || !totalForms || !template) return;
+
+        const rowTemplate = template.innerHTML;
+
+        function setRowReadonly(row, readonly) {
+            // O exame é um <select>; o que controlamos aqui é apenas o campo do valor.
+            const valorInput = row.querySelector('input[name$="-valor"]');
+            if (valorInput) valorInput.readOnly = readonly;
+        }
+
+        // UX: como agora o exame vem do dropdown, o utilizador pode preencher o valor diretamente.
+        container.querySelectorAll('.exame-row').forEach((row) => setRowReadonly(row, false));
+
+        // Delegação de eventos: delete + edit
+        container.addEventListener('click', function (e) {
+            const removeBtn = e.target.closest('.remove-exame');
+            if (removeBtn) {
+                const row = removeBtn.closest('.exame-row');
+                if (row) row.remove();
+                return;
+            }
+
+            const editBtn = e.target.closest('.edit-exame');
+            if (editBtn) {
+                const row = editBtn.closest('.exame-row');
+                if (!row) return;
+
+                // Garante que o valor fica editável e dá foco ao input.
+                setRowReadonly(row, false);
+                const valorInput = row.querySelector('input[name$="-valor"]');
+                if (valorInput) valorInput.focus();
+            }
+        });
+
+        addBtn.addEventListener('click', function () {
+            const index = parseInt(totalForms.value, 10);
+            const html = rowTemplate.replace(/__prefix__/g, index);
+            container.insertAdjacentHTML('beforeend', html);
+            totalForms.value = index + 1;
+
+            const newRow = container.lastElementChild;
+            if (newRow && newRow.classList.contains('exame-row')) {
+                setRowReadonly(newRow, false);
+                const valorInput = newRow.querySelector('input[name$="-valor"]');
+                if (valorInput) valorInput.focus();
+            }
+        });
+    })();
+</script>
+<script>
+    (function () {
+        const modal = document.getElementById("ato-modal");
+        const openBtn = document.getElementById("open-ato-modal");
+        const closeBtn = document.getElementById("ato-modal-close");
+        const cancelBtn = document.getElementById("ato-modal-cancel");
+        const backdrop = document.getElementById("ato-modal-backdrop");
+        const form = document.getElementById("ato-form");
+        const nomeInput = document.getElementById("ato-nome");
+        const errorEl = document.getElementById("ato-form-error");
+        const examesContainer = document.getElementById("exames-container");
+        if (!modal || !openBtn || !form || !nomeInput || !examesContainer) return;
+
+        function openModal() {
+            errorEl.classList.add("hidden");
+            errorEl.textContent = "";
+            nomeInput.value = "";
+            modal.classList.remove("hidden");
+            window.setTimeout(() => nomeInput.focus(), 0);
+        }
+        function closeModal() {
+            modal.classList.add("hidden");
+        }
+
+        openBtn.addEventListener("click", openModal);
+        if (closeBtn) closeBtn.addEventListener("click", closeModal);
+        if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+        if (backdrop) backdrop.addEventListener("click", closeModal);
+
+        function appendOptionToAllSelects(value, label) {
+            const selects = examesContainer.querySelectorAll('select[name$="-exame_nome"]');
+            selects.forEach((select) => {
+                const exists = Array.from(select.options).some((opt) => String(opt.value) === String(value));
+                if (!exists) {
+                    const opt = new Option(label, value, false, false);
+                    select.add(opt);
+                }
+            });
+        }
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const csrfToken = form.querySelector("input[name='csrfmiddlewaretoken']")?.value || "";
+            try {
+                const resp = await fetch("{% url 'core:exame_novo_ajax' %}", {
+                    method: "POST",
+                    headers: { "X-CSRFToken": csrfToken },
+                    credentials: "same-origin",
+                    body: formData,
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.ok) {
+                    const msg = (data.errors && data.errors.nome && data.errors.nome[0]) || data.error || "Não foi possível guardar o ato médico.";
+                    errorEl.textContent = msg;
+                    errorEl.classList.remove("hidden");
+                    return;
+                }
+                appendOptionToAllSelects(data.id, data.nome);
+                const lastSelect = examesContainer.querySelector('.exame-row:last-child select[name$="-exame_nome"]');
+                if (lastSelect) lastSelect.value = String(data.id);
+                closeModal();
+            } catch (err) {
+                errorEl.textContent = "Erro de rede ao criar o ato médico.";
+                errorEl.classList.remove("hidden");
+            }
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const cpInput = document.getElementById('id_codigo_postal');
+        const localidadeInput = document.getElementById('id_localidade');
+        const ruaInput = document.getElementById('id_rua_avenida');
+        const concelhoInput = document.getElementById('id_concelho');
+        const distritoInput = document.getElementById('id_distrito');
+        const freguesiaInput = document.getElementById('id_freguesia');
+        const complementoInput = document.getElementById('id_complemento');
+
+        if (!cpInput || !localidadeInput || !ruaInput) return;
+
+        const autoFields = [ruaInput, localidadeInput, concelhoInput, distritoInput, freguesiaInput, complementoInput].filter(Boolean);
+        autoFields.forEach((field) => {
+            field.readOnly = true;
+            field.classList.add('bg-slate-100', 'dark:bg-slate-800/70');
+        });
+
+        let statusEl = document.getElementById('cp-lookup-status');
+        if (!statusEl && cpInput.parentElement) {
+            statusEl = document.createElement('p');
+            statusEl.id = 'cp-lookup-status';
+            statusEl.className = 'mt-1 text-xs text-slate-500';
+            cpInput.parentElement.appendChild(statusEl);
+        }
+
+        function setStatus(msg, tone) {
+            if (!statusEl) return;
+            statusEl.textContent = msg || '';
+            statusEl.classList.remove('text-slate-500', 'text-red-600', 'text-emerald-600');
+            statusEl.classList.add(
+                tone === 'error' ? 'text-red-600' : (tone === 'ok' ? 'text-emerald-600' : 'text-slate-500')
+            );
+        }
+
+        function normalizarCP(valor) {
+            const digits = String(valor || '').replace(/\D/g, '');
+            if (digits.length !== 7) return null;
+            return digits.slice(0, 4) + '-' + digits.slice(4);
+        }
+
+        function mascararCP(valor) {
+            const digits = String(valor || '').replace(/\D/g, '').slice(0, 7);
+            if (digits.length <= 4) return digits;
+            return digits.slice(0, 4) + '-' + digits.slice(4);
+        }
+
+        let debounceTimer = null;
+        let lastRequestToken = 0;
+        let lastLookupCp = "";
+        let lastSuccessCp = "";
+
+        async function lookupEndereco() {
+            const cp = normalizarCP(cpInput.value);
+            if (!cp) {
+                setStatus('', 'info');
+                lastLookupCp = "";
+                return;
+            }
+            if (cp === lastLookupCp) return;
+            lastLookupCp = cp;
+
+            setStatus('A procurar morada...', 'info');
+
+            const token = ++lastRequestToken;
+            try {
+                const resp = await fetch(
+                    "{% url 'arbitro:lookup_codigo_postal' %}?codigo_postal=" +
+                    encodeURIComponent(cp),
+                    { method: "GET", credentials: "same-origin" }
+                );
+                const data = await resp.json().catch(() => ({}));
+                if (token !== lastRequestToken) return; // evita corrida de requests
+
+                if (!resp.ok) {
+                    setStatus(data.error || 'Não foi possível preencher a morada.', 'error');
+                    return;
+                }
+
+                if (data.codigo_postal) cpInput.value = data.codigo_postal;
+                if (data.localidade) localidadeInput.value = data.localidade;
+                if (data.rua_avenida) ruaInput.value = data.rua_avenida;
+                if (concelhoInput && data.concelho) concelhoInput.value = data.concelho;
+                if (distritoInput && data.distrito) distritoInput.value = data.distrito;
+                if (freguesiaInput && data.freguesia) freguesiaInput.value = data.freguesia;
+
+                lastSuccessCp = cp;
+                setStatus('Morada preenchida automaticamente.', 'ok');
+            } catch (e) {
+                if (token !== lastRequestToken) return;
+                setStatus('Falha ao consultar o serviço de código postal.', 'error');
+            }
+        }
+
+        function scheduleLookup() {
+            if (debounceTimer) window.clearTimeout(debounceTimer);
+            debounceTimer = window.setTimeout(lookupEndereco, 350);
+        }
+
+        cpInput.addEventListener('input', function () {
+            cpInput.value = mascararCP(cpInput.value);
+            scheduleLookup();
+        });
+        cpInput.addEventListener('blur', function () {
+            const cp = normalizarCP(cpInput.value);
+            if (!cp) return;
+            if (cp !== lastSuccessCp) lookupEndereco();
+        });
+        cpInput.addEventListener('change', function () {
+            const cp = normalizarCP(cpInput.value);
+            if (!cp) return;
+            if (cp !== lastSuccessCp) lookupEndereco();
+        });
+
+        cpInput.value = mascararCP(cpInput.value);
+
+        if (normalizarCP(cpInput.value)) {
+            lookupEndereco();
+        }
+    })();
+</script>
+</body>
+</html>
+

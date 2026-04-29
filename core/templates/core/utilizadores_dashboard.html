@@ -1,0 +1,149 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-PT">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Utilizadores | Gol Health</title>
+  <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{primary:"#0d59f2","background-light":"#f5f6f8","background-dark":"#101622"},fontFamily:{display:["Lexend"]}}}}</script>
+  <style>body{font-family:'Lexend',sans-serif;}</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="flex min-h-screen">
+  {% include "core/partials/app_sidebar.html" %}
+  <main class="flex-1 ml-64 min-h-screen">
+    {% url 'core:utilizadores_dashboard' as users_url %}
+    {% include "core/partials/app_header.html" with header_search_action=users_url header_search_q=search_q %}
+    <div class="p-8">
+      <div class="flex items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold">Gestão de Utilizadores</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Dashboard de contas, permissões e estado de acesso da plataforma.</p>
+        </div>
+        <a href="{% url 'core:criar_utilizador' %}" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors"><span class="material-icons-round text-base">person_add</span>Novo utilizador</a>
+      </div>
+      {% if messages %}{% for message in messages %}
+      <div class="mb-4 rounded-lg px-4 py-3 text-sm {% if 'success' in message.tags %}bg-green-50 text-green-800 border border-green-200{% elif 'error' in message.tags %}bg-red-50 text-red-800 border border-red-200{% else %}bg-slate-100 text-slate-800{% endif %}">{{ message }}</div>
+      {% endfor %}{% endif %}
+
+      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <article class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Total de utilizadores</p>
+          <p class="mt-2 text-2xl font-bold">{{ total_utilizadores }}</p>
+          <p class="mt-1 text-xs text-slate-500">{{ total_com_avatar }} com foto de perfil</p>
+        </article>
+        <article class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Estado de acesso</p>
+          <p class="mt-2 text-2xl font-bold text-green-700">{{ total_ativos }}</p>
+          <p class="mt-1 text-xs text-slate-500">{{ total_inativos }} inativos</p>
+        </article>
+        <article class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Permissões elevadas</p>
+          <p class="mt-2 text-2xl font-bold">{{ total_equipa }}</p>
+          <p class="mt-1 text-xs text-slate-500">{{ total_superusers }} superutilizadores</p>
+        </article>
+        <article class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Pendências</p>
+          <p class="mt-2 text-2xl font-bold text-amber-600">{{ total_troca_password_pendente }}</p>
+          <p class="mt-1 text-xs text-slate-500">{{ total_sem_grupo }} sem grupo atribuído</p>
+        </article>
+      </section>
+
+      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+        <article class="xl:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="font-semibold">Distribuição por departamento</h3>
+            <span class="text-xs text-slate-500">Top 6</span>
+          </div>
+          <div class="p-4 space-y-4">
+            {% for dep in departamentos %}
+              <div>
+                <div class="flex items-center justify-between text-sm mb-1">
+                  <span class="font-medium">{{ dep.departamento }}</span>
+                  <span class="text-slate-500">{{ dep.total }}</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-primary rounded-full" style="width: {{ dep.percent }}%"></div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-sm text-slate-500">Sem departamentos registados.</p>
+            {% endfor %}
+          </div>
+        </article>
+        <article class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+            <h3 class="font-semibold">Utilizadores recentes</h3>
+          </div>
+          <div class="p-4 space-y-3">
+            {% for u in utilizadores_recentes %}
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium truncate">{% if u.first_name or u.last_name %}{{ u.first_name }} {{ u.last_name }}{% else %}{{ u.username }}{% endif %}</p>
+                  <p class="text-xs text-slate-500 truncate">{{ u.email|default:"—" }}</p>
+                </div>
+                <span class="text-[11px] text-slate-500 whitespace-nowrap">{{ u.date_joined|date:"d/m/Y" }}</span>
+              </div>
+            {% empty %}
+              <p class="text-sm text-slate-500">Sem registos.</p>
+            {% endfor %}
+          </div>
+        </article>
+      </section>
+
+      <section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+          <h3 class="font-semibold">Lista detalhada de utilizadores</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left border-b border-slate-200 dark:border-slate-800">
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Nome</th>
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">E-mail</th>
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Departamento</th>
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Equipa</th>
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Superuser</th>
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Estado</th>
+                <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr class="border-t border-slate-100 dark:border-slate-800">
+                <td class="px-4 py-3 font-medium">{% if u.first_name or u.last_name %}{{ u.first_name }} {{ u.last_name }}{% else %}{{ u.username }}{% endif %}</td>
+                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ u.email|default:'—' }}</td>
+                <td class="px-4 py-3">{% if u.departamento_nome %}{{ u.departamento_nome }}{% else %}—{% endif %}</td>
+                <td class="px-4 py-3">{% if u.is_staff %}<span class="text-green-700">Sim</span>{% else %}<span class="text-slate-500">Não</span>{% endif %}</td>
+                <td class="px-4 py-3">{% if u.is_superuser %}<span class="text-green-700">Sim</span>{% else %}<span class="text-slate-500">Não</span>{% endif %}</td>
+                <td class="px-4 py-3">{% if u.is_active %}<span class="inline-flex rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-semibold">Ativo</span>{% else %}<span class="inline-flex rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-semibold">Inativo</span>{% endif %}</td>
+                <td class="px-4 py-3 text-right">
+                  <div class="inline-flex items-center gap-2">
+                    <a href="{% url 'core:utilizador_editar' u.pk %}" class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10"><span class="material-icons-round text-base">edit</span></a>
+                    {% if request.user.pk != u.pk %}
+                    <form method="post" action="{% url 'core:utilizador_toggle_ativo' u.pk %}">{% csrf_token %}
+                      <button type="submit" class="inline-flex items-center justify-center w-9 h-9 rounded-lg {% if u.is_active %}text-red-600 hover:bg-red-50{% else %}text-green-700 hover:bg-green-50{% endif %}" title="{% if u.is_active %}Desativar{% else %}Ativar{% endif %}">
+                        <span class="material-icons-round text-base">{% if u.is_active %}block{% else %}check_circle{% endif %}</span>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">Nenhum utilizador encontrado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<script>(function(){var m=document.getElementById('user-menu');var t=document.getElementById('user-menu-toggle');if(!m||!t)return;t.addEventListener('click',function(e){e.stopPropagation();m.classList.toggle('hidden');});document.addEventListener('click',function(e){if(!m.classList.contains('hidden')){if(!m.contains(e.target)&&!t.contains(e.target)){m.classList.add('hidden');}}});})();</script>
+</body>
+</html>

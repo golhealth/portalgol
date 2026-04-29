@@ -1,0 +1,1404 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Painel do Árbitro | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                        success: "#10b981",
+                        warning: "#f59e0b",
+                    },
+                    fontFamily: { display: ["Lexend", "sans-serif"] },
+                    borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121c] dark:text-gray-100 min-h-screen font-display">
+<div class="flex min-h-screen">
+    <!-- Sidebar (imagem 1) -->
+        {% include "core/partials/app_sidebar.html" %}
+
+    <main class="flex-1 ml-64 min-h-screen flex flex-col">
+        <!-- Header (imagem 2) -->
+            {% include "core/partials/app_header.html" %}
+
+        <!-- Conteúdo: painel do árbitro -->
+        <div class="flex-1 px-4 md:px-10 py-8 max-w-[1200px] w-full mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                <div class="flex items-center gap-6">
+                    <div class="size-24 md:size-32 rounded-xl shadow-lg bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-white text-3xl md:text-4xl font-bold shrink-0">
+                        {{ arbitro.nome_completo|first|upper }}
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <h1 class="text-[#0d121c] dark:text-white text-2xl md:text-3xl font-bold tracking-tight truncate">
+                            Olá, {{ arbitro.nome_completo }}
+                        </h1>
+                        <p class="text-[#49659c] dark:text-gray-400 text-base md:text-lg">
+                            {% if arbitro.associacao_futebol %}{{ arbitro.associacao_futebol.nome_completo }}{% endif %}
+                            {% if arbitro.categoria %} · {{ arbitro.categoria.nome }}{% endif %}
+                            {% if arbitro.modalidade %} · {{ arbitro.modalidade.nome }}{% endif %}
+                            {% if not arbitro.associacao_futebol and not arbitro.categoria and not arbitro.modalidade %}—{% endif %}
+                        </p>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            {% if epoca_ativa %}
+                                <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">{{ epoca_ativa.nome }}</span>
+                            {% else %}
+                                <span class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold rounded-full uppercase tracking-wider">Sem época ativa</span>
+                            {% endif %}
+                            {% if arbitro.estado_aptidao == 'aguardando_exame' %}
+                                <span class="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-full uppercase tracking-wider">Aguardando exame</span>
+                            {% elif arbitro.estado_aptidao == 'inativo' %}
+                                <span class="px-3 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-full uppercase tracking-wider">Inativo</span>
+                            {% elif exame_anual_atrasado %}
+                                <span class="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-full uppercase tracking-wider">Exame em atraso</span>
+                            {% else %}
+                                <span class="px-3 py-1 bg-success/10 text-success text-xs font-bold rounded-full uppercase tracking-wider">Apto</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="{% url 'arbitro:editar' arbitro.pk %}" class="flex items-center justify-center rounded-lg h-11 px-6 bg-white dark:bg-gray-800 border border-[#ced7e8] dark:border-gray-700 text-[#0d121c] dark:text-white text-sm font-bold shadow-sm hover:bg-gray-50 transition-all">
+                        <span class="material-symbols-outlined mr-2 text-lg">edit</span>
+                        Editar perfil
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="rounded-xl border p-6 flex flex-col gap-5 {% if arbitro.estado_aptidao == 'inativo' %}border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50{% elif arbitro.estado_aptidao == 'aguardando_exame' or exame_anual_atrasado %}border-warning/40 bg-warning/5 dark:bg-warning/10{% else %}border-success/30 bg-success/5 dark:bg-success/10{% endif %}">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                            <div class="flex items-start gap-4 min-w-0">
+                                <div class="flex items-center justify-center size-14 rounded-full shrink-0 shadow-lg {% if arbitro.estado_aptidao == 'inativo' %}bg-slate-400 text-white{% elif arbitro.estado_aptidao == 'aguardando_exame' or exame_anual_atrasado %}bg-warning text-white{% else %}bg-success text-white shadow-success/20{% endif %}">
+                                    <span class="material-symbols-outlined text-3xl">{% if arbitro.estado_aptidao == 'inativo' %}block{% elif arbitro.estado_aptidao == 'aguardando_exame' %}schedule{% elif exame_anual_atrasado %}warning{% else %}verified_user{% endif %}</span>
+                                </div>
+                                <div class="flex flex-col gap-3 min-w-0">
+                                    <div>
+                                        <h3 class="text-[#0d121c] dark:text-white text-xl font-bold">Situação de aptidão</h3>
+                                        <p class="text-[#49659c] dark:text-gray-400 text-sm mt-1">
+                                            {% if arbitro.estado_aptidao == 'inativo' %}O registo está inativo na plataforma.
+                                            {% elif arbitro.estado_aptidao == 'aguardando_exame' %}Pendente de exame complementar ou conclusão do processo médico.
+                                            {% elif exame_anual_atrasado %}O prazo anual após o último exame pode estar ultrapassado. Considere marcar nova avaliação.
+                                            {% else %}Registo ativo. Mantenha os exames médicos em dia conforme a política da associação.{% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                                        <label for="select-estado-aptidao" class="text-sm font-semibold text-[#0d121c] dark:text-white shrink-0">Estado</label>
+                                        <select id="select-estado-aptidao" name="estado_aptidao" class="rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm max-w-xs w-full sm:w-auto" data-arbitro-id="{{ arbitro.pk }}">
+                                            {% for value, label in estado_aptidao_choices %}
+                                            <option value="{{ value }}" {% if arbitro.estado_aptidao == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <p id="estado-aptidao-msg" class="hidden text-xs text-red-600 dark:text-red-400"></p>
+                                </div>
+                            </div>
+                            <button type="button" id="btn-carregar-exame" class="w-full md:w-auto flex items-center justify-center rounded-lg h-10 px-6 bg-primary text-white text-sm font-bold hover:bg-blue-700 transition-colors shrink-0">
+                                Carregar exame
+                            </button>
+                        </div>
+                        {% if exame_anual_atrasado and arbitro.estado_aptidao != 'inativo' %}
+                        <div class="flex flex-wrap items-center gap-3 pt-3 border-t border-warning/25 dark:border-warning/30">
+                            {% if pode_agendar_modal %}
+                            <button type="button" data-open-agendar-modal class="text-sm font-bold text-primary hover:underline">Marcar exame</button>
+                            {% endif %}
+                            <span class="text-xs text-amber-800 dark:text-amber-300">Atraso estimado: {{ dias_atraso_exame }} dia{% if dias_atraso_exame != 1 %}s{% endif %} após a data limite anual.</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#ced7e8] dark:border-gray-800 p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">event_repeat</span>
+                                <p class="text-[#0d121c] dark:text-white text-lg font-bold">Próximo exame anual</p>
+                            </div>
+                            {% if arbitro.data_ultimo_exame %}
+                                {% if exame_anual_atrasado %}
+                                    <span class="text-warning font-bold text-xl">Atrasado {{ dias_atraso_exame }} dia{% if dias_atraso_exame != 1 %}s{% endif %}</span>
+                                {% else %}
+                                    <span class="text-primary font-bold text-xl">{{ dias_proximo_exame }} dia{% if dias_proximo_exame != 1 %}s{% endif %}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-slate-500 text-sm font-medium">Sem data de último exame</span>
+                            {% endif %}
+                        </div>
+                        {% if arbitro.data_ultimo_exame %}
+                        <div class="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-3">
+                            <div class="h-full bg-primary rounded-full transition-all duration-1000" style="width: {{ progress_exame_anual }}%;"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm flex-wrap gap-2">
+                            <p class="text-[#49659c] dark:text-gray-400">Último exame: {{ arbitro.data_ultimo_exame|date:"d/m/Y" }}</p>
+                            {% if data_limite_exame %}
+                                <p class="font-semibold text-primary">Data limite: {{ data_limite_exame|date:"d/m/Y" }}</p>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-[#49659c] dark:text-gray-400">Registe a data do último exame médico na ficha do árbitro para acompanhar o ciclo anual.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#ced7e8] dark:border-gray-800 p-6 shadow-sm">
+                        <h3 class="text-[#0d121c] dark:text-white text-lg font-bold mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined">history</span>
+                            Histórico de marcações (consultas)
+                        </h3>
+                        {% if marcacoes_historico %}
+                        <div class="space-y-6 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100 dark:before:bg-gray-800">
+                            {% for m in marcacoes_historico %}
+                            <div class="relative pl-10">
+                                <div class="absolute left-0 top-1 size-7 bg-primary rounded-full border-4 border-white dark:border-gray-900 z-10"></div>
+                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                                    <div>
+                                        <button
+                                            type="button"
+                                            class="font-bold text-[#0d121c] dark:text-white hover:text-primary transition-colors text-left"
+                                            data-open-marcacao-modal
+                                            data-marcacao-id="{{ m.id }}"
+                                            data-edit-url="{% url 'exames:marcacao_editar' m.id %}"
+                                            data-delete-url="{% url 'exames:marcacao_excluir' m.id %}"
+                                            data-next-url="{% url 'arbitro:detalhe' arbitro.id %}"
+                                            data-prestador-id="{% if m.prestador %}{{ m.prestador.id }}{% endif %}"
+                                            data-data-hora="{% if m.data_hora_consulta %}{{ m.data_hora_consulta|date:'Y-m-d\\TH:i' }}{% endif %}"
+                                            data-observacao="{{ m.observacao|default:''|escape }}"
+                                            data-exames="{% for item in m.itens.all %}{{ item.exame_nome|escapejs }}{% if not forloop.last %}|||{% endif %}{% endfor %}"
+                                        >
+                                            {% for item in m.itens.all %}
+                                                {{ item.exame_nome }}{% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                Marcação
+                                            {% endfor %}
+                                        </button>
+                                        <p class="text-sm text-[#49659c] dark:text-gray-400">
+                                            {% if m.prestador %}{{ m.prestador.nome_completo }}{% else %}—{% endif %}
+                                            {% if m.epoca %} · {{ m.epoca.nome }}{% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="text-left sm:text-right shrink-0">
+                                        <span class="text-success font-bold text-sm">Marcado</span>
+                                        <p class="text-xs text-[#49659c] dark:text-gray-400">
+                                            {% if m.data_hora_consulta %}{{ m.data_hora_consulta|date:"d/m/Y H:i" }}{% else %}{{ m.criado_em|date:"d/m/Y H:i" }}{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-[#49659c] dark:text-gray-400">Ainda não existem consultas marcadas para este árbitro na plataforma.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#ced7e8] dark:border-gray-800 p-6 shadow-sm">
+                        <h3 class="text-[#0d121c] dark:text-white text-lg font-bold mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined">upload_file</span>
+                            Exames carregados (realização)
+                        </h3>
+                        {% if realizacoes_exame %}
+                        <div class="space-y-4">
+                            {% for r in realizacoes_exame %}
+                            <div class="rounded-lg border border-[#ced7e8] dark:border-gray-700 p-4 text-sm">
+                                <p class="font-bold text-[#0d121c] dark:text-white">{{ r.data_realizacao|date:"d/m/Y" }} — {% if r.prestador %}{{ r.prestador.nome_completo }}{% else %}—{% endif %}</p>
+                                {% if r.exames_complementares %}
+                                <p class="text-xs text-amber-700 dark:text-amber-300 mt-1"><span class="font-semibold">Complementares:</span> {{ r.exames_complementares|truncatechars:200 }}</p>
+                                {% endif %}
+                                {% if r.data_marcacao_complementar %}
+                                <p class="text-xs text-[#49659c] dark:text-gray-400 mt-1">Marcação complementar: {{ r.data_marcacao_complementar|date:"d/m/Y H:i" }}</p>
+                                {% endif %}
+                                {% if r.observacoes %}
+                                <p class="text-xs text-[#49659c] dark:text-gray-400 mt-1">{{ r.observacoes|truncatechars:240 }}</p>
+                                {% endif %}
+                                {% if r.arquivo_exame %}
+                                <p class="mt-2">
+                                    <a href="{{ r.arquivo_exame.url }}" target="_blank" rel="noopener" class="text-xs font-semibold text-primary hover:underline">Ver exame anexado</a>
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-[#49659c] dark:text-gray-400">Ainda não foi carregada nenhuma realização de exame para este árbitro.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#ced7e8] dark:border-gray-800 p-6 shadow-sm">
+                        <h3 class="text-[#0d121c] dark:text-white text-lg font-bold mb-4">Contactos do registo</h3>
+                        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <dt class="text-[#49659c] dark:text-gray-400">Email</dt>
+                                <dd class="font-medium">{{ arbitro.email|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-[#49659c] dark:text-gray-400">Telemóvel</dt>
+                                <dd class="font-medium">{{ arbitro.telefone|default:"—" }}</dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="bg-primary rounded-xl p-6 shadow-lg shadow-primary/20 text-white">
+                        <h3 class="text-lg font-bold mb-4">Ações rápidas</h3>
+                        <div class="flex flex-col gap-3">
+                            {% if pode_agendar_modal %}
+                            <button type="button" data-open-agendar-modal class="flex items-center gap-3 w-full bg-white text-primary rounded-lg px-4 py-3 font-bold text-sm hover:bg-opacity-90 transition-all justify-center">
+                                <span class="material-symbols-outlined">calendar_month</span>
+                                Agendar novo exame
+                            </button>
+                            {% else %}
+                            <span class="flex items-center gap-3 w-full bg-white/50 text-primary rounded-lg px-4 py-3 font-bold text-sm justify-center opacity-80 cursor-not-allowed text-center" title="É preciso época ativa, associação no árbitro e associação vinculada à época.">Agendar novo exame</span>
+                            {% endif %}
+                            <a href="{% url 'exames:exames_marcados' %}" class="flex items-center gap-3 w-full bg-primary/20 border border-white/30 text-white rounded-lg px-4 py-3 font-bold text-sm hover:bg-white/10 transition-all justify-center">
+                                <span class="material-symbols-outlined">description</span>
+                                Ver consultas marcadas
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#ced7e8] dark:border-gray-800 overflow-hidden shadow-sm">
+                        <div class="p-5 border-b border-[#ced7e8] dark:border-gray-800">
+                            <h3 class="text-[#0d121c] dark:text-white text-lg font-bold flex items-center gap-2">
+                                <span class="material-symbols-outlined text-warning">lightbulb</span>
+                                Dicas de saúde
+                            </h3>
+                        </div>
+                        <div class="p-5 space-y-5">
+                            <div>
+                                <div class="aspect-video rounded-lg bg-gradient-to-br from-sky-100 to-primary/20 dark:from-slate-800 dark:to-slate-700 mb-3 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-4xl text-primary/60">water_drop</span>
+                                </div>
+                                <h4 class="font-bold text-sm text-[#0d121c] dark:text-white">Hidratação em jogos intensos</h4>
+                                <p class="text-xs text-[#49659c] dark:text-gray-400 mt-1 line-clamp-2">Reponha líquidos antes, durante e após o esforço, sobretudo em ambientes quentes.</p>
+                            </div>
+                            <div>
+                                <div class="aspect-video rounded-lg bg-gradient-to-br from-emerald-100 to-success/20 dark:from-slate-800 dark:to-slate-700 mb-3 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-4xl text-success/60">spa</span>
+                                </div>
+                                <h4 class="font-bold text-sm text-[#0d121c] dark:text-white">Recuperação pós-jogo</h4>
+                                <p class="text-xs text-[#49659c] dark:text-gray-400 mt-1 line-clamp-2">Combine descanso, alongamentos leves e sono regular para reduzir lesões.</p>
+                            </div>
+                            <span class="block w-full text-center text-primary text-sm font-bold opacity-70 cursor-default">Conteúdo informativo</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-800/50 border border-[#ced7e8] dark:border-gray-700 rounded-xl p-5">
+                        <h4 class="text-xs font-bold text-[#49659c] dark:text-gray-400 uppercase tracking-widest mb-3">Resumo</h4>
+                        <div class="flex items-start gap-4">
+                            <div class="size-12 rounded-lg bg-white dark:bg-gray-900 border border-[#ced7e8] dark:border-gray-700 flex flex-col items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-primary text-xl">sports</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold">Dados clínicos</p>
+                                <p class="text-xs text-[#49659c] dark:text-gray-400 mt-1">Último exame: {{ arbitro.data_ultimo_exame|date:"d/m/Y"|default:"—" }} · NIF: {{ arbitro.cpf_nif|default:"—" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if pode_agendar_modal %}
+            <div id="modal-agendar-arbitro" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/40"></div>
+                <div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Agendar consulta</h3>
+                        <button type="button" id="fechar-modal-agendar" class="text-slate-500 hover:text-primary transition-colors">
+                            <span class="material-icons-round">close</span>
+                        </button>
+                    </div>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">{{ arbitro.nome_completo }}</p>
+                    <p class="text-xs text-slate-500 mb-4">Época: {{ epoca_ativa.nome }} · {{ arbitro.associacao_futebol.nome_completo }}</p>
+                    <form id="form-agendar-arbitro" action="{{ marcar_exame_ajax_url }}" method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="epoca_id" value="{{ epoca_ativa.id }}">
+                        <input type="hidden" name="associacao_id" value="{{ arbitro.associacao_futebol.id }}">
+                        <input type="hidden" name="arbitro_id" value="{{ arbitro.id }}">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Prestador</label>
+                            <select name="prestador_id" id="detalhe-prestador-id" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm">
+                                <option value="">Selecionar prestador</option>
+                                {% for p in prestadores %}
+                                    <option value="{{ p.id }}">{{ p.nome_completo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Exames do prestador</label>
+                            <div id="detalhe-exames-loading" class="hidden text-xs text-slate-500 mb-2">A carregar exames...</div>
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/60 dark:bg-slate-800/50 space-y-3">
+                                <div class="flex gap-2">
+                                    <select id="detalhe-exame-select" class="flex-1 rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled>
+                                        <option value="">Selecione um exame</option>
+                                    </select>
+                                    <button type="button" id="detalhe-exame-add" class="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700">
+                                        Adicionar
+                                    </button>
+                                </div>
+                                <div id="detalhe-exames-selecionados" class="min-h-8 flex flex-wrap gap-2">
+                                    <p class="text-xs text-slate-500">Selecione um prestador.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="detalhe-data-hora-consulta" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Data e hora da consulta</label>
+                            <input type="datetime-local" id="detalhe-data-hora-consulta" name="data_hora_consulta" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"/>
+                        </div>
+                        <div>
+                            <label for="detalhe-observacao" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Observação</label>
+                            <textarea id="detalhe-observacao" name="observacao" rows="2" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm" placeholder="Opcional"></textarea>
+                        </div>
+                        <p id="detalhe-agendar-erro" class="hidden text-xs text-red-600"></p>
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" id="cancelar-modal-agendar" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold">Confirmar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <div id="modal-carregar-exame" class="fixed inset-0 z-[65] hidden items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/40" data-fechar-carregar></div>
+                <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Carregar exame</h3>
+                        <button type="button" id="fechar-modal-carregar" class="text-slate-500 hover:text-primary transition-colors">
+                            <span class="material-icons-round">close</span>
+                        </button>
+                    </div>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">{{ arbitro.nome_completo }}</p>
+                    <form id="form-carregar-exame" action="{{ carregar_exame_ajax_url }}" method="post" enctype="multipart/form-data" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="arbitro_id" value="{{ arbitro.pk }}">
+                        <input type="hidden" id="carregar-marcacao-id" name="marcacao_id" value="">
+                        <div>
+                            <label for="carregar-data-realizacao" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Data da realização</label>
+                            <input type="date" id="carregar-data-realizacao" name="data_realizacao" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"/>
+                        </div>
+                        <div>
+                            <label for="carregar-prestador-id" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Prestador</label>
+                            <select id="carregar-prestador-id" name="prestador_id" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm">
+                                <option value="">Selecionar prestador</option>
+                                {% for p in prestadores %}
+                                <option value="{{ p.id }}">{{ p.nome_completo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <input type="hidden" id="carregar-exames-realizados" name="exames_realizados" value="">
+                        <div id="carregar-prefill-atos-wrap" class="hidden rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3">
+                            <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">Atos da última marcação <span class="font-normal text-slate-500">(registados nesta realização)</span></p>
+                            <p id="carregar-prefill-atos" class="text-sm text-slate-800 dark:text-slate-100 mt-1"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Exames adicionais a marcar <span class="text-slate-400 font-normal">(opcional)</span></label>
+                            <input type="hidden" id="carregar-complementares" name="exames_complementares" value="">
+                            <div id="carregar-exames-loading" class="hidden text-xs text-slate-500 mb-2">A carregar exames do prestador...</div>
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3 bg-slate-50/60 dark:bg-slate-800/50">
+                                <input type="text" id="carregar-complementar-filtro" autocomplete="off" placeholder="Filtrar lista de exames…" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled/>
+                                <div class="flex gap-2">
+                                    <select id="carregar-complementar-exame-select" class="flex-1 rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled>
+                                        <option value="">Selecione um exame</option>
+                                    </select>
+                                    <button type="button" id="carregar-complementar-exame-add" class="shrink-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700">Adicionar</button>
+                                </div>
+                                <div id="carregar-exames-selecionados" class="min-h-8 flex flex-wrap gap-2">
+                                    <p class="text-xs text-slate-500">Selecione um prestador para listar os exames disponíveis.</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">Só se aplicam a <strong>novos</strong> exames a agendar. Se selecionar algum, indique a data e hora; o estado passará a <strong>Aguardando o exame</strong>. Os atos da última marcação acima não contam como adicionais.</p>
+                        </div>
+                        <div id="bloco-data-complementar" class="hidden">
+                            <label for="carregar-data-complementar" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Data e hora para marcar o exame adicional</label>
+                            <input type="datetime-local" id="carregar-data-complementar" name="data_marcacao_complementar" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"/>
+                        </div>
+                        <div id="bloco-decisao-aptidao" class="space-y-2">
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Sem exames adicionais a marcar, defina a situação após este exame</p>
+                            <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                <input type="radio" name="decisao_aptidao" value="ativo" class="h-4 w-4 text-primary focus:ring-primary/40" checked>
+                                Ativo
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                <input type="radio" name="decisao_aptidao" value="inativo" class="h-4 w-4 text-primary focus:ring-primary/40">
+                                Inativo
+                            </label>
+                        </div>
+                        <div>
+                            <label for="carregar-observacoes" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Observações</label>
+                            <textarea id="carregar-observacoes" name="observacoes" rows="2" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm" placeholder="Opcional"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Upload do exame realizado</label>
+                            <div id="carregar-dropzone" class="rounded-xl border-2 border-dashed border-[#d1d5db] dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/30 p-4 text-center cursor-pointer transition-colors hover:border-primary/60">
+                                <input type="file" id="carregar-arquivo-exame" name="arquivo_exame" accept=".pdf,.jpg,.jpeg,.png,.webp" class="hidden"/>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Arraste o ficheiro aqui ou clique para selecionar</p>
+                                <p id="carregar-arquivo-nome" class="mt-1 text-xs text-slate-500">Nenhum ficheiro selecionado</p>
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">Formatos: PDF, JPG, PNG ou WEBP.</p>
+                        </div>
+                        <p id="carregar-exame-erro" class="hidden text-xs text-red-600 dark:text-red-400"></p>
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" id="cancelar-modal-carregar" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="modal-editar-marcacao" class="fixed inset-0 z-[66] hidden items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/40" data-fechar-marcacao></div>
+                <div class="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Detalhes da marcação</h3>
+                        <button type="button" id="fechar-modal-marcacao" class="text-slate-500 hover:text-primary transition-colors">
+                            <span class="material-icons-round">close</span>
+                        </button>
+                    </div>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">{{ arbitro.nome_completo }}</p>
+                    <form id="form-editar-marcacao" method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <div>
+                            <label for="marcacao-prestador-id" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Prestador</label>
+                            <select id="marcacao-prestador-id" name="prestador" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm">
+                                <option value="">Selecionar prestador</option>
+                                {% for p in prestadores %}
+                                <option value="{{ p.id }}">{{ p.nome_completo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Exames da marcação</label>
+                            <div id="marcacao-exames-loading" class="hidden text-xs text-slate-500 mb-2">A carregar exames...</div>
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3 bg-slate-50/60 dark:bg-slate-800/50">
+                                <input type="text" id="marcacao-exame-filtro" autocomplete="off" placeholder="Filtrar lista de exames…" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled/>
+                                <div class="flex gap-2">
+                                    <select id="marcacao-exame-select" class="flex-1 rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-sm" disabled>
+                                        <option value="">Selecione um exame</option>
+                                    </select>
+                                    <button type="button" id="marcacao-exame-add" class="shrink-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700">Adicionar</button>
+                                </div>
+                                <div id="marcacao-exames-selecionados" class="min-h-8 flex flex-wrap gap-2">
+                                    <p class="text-xs text-slate-500">Selecione um prestador.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="marcacao-data-hora-consulta" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Data e hora da consulta</label>
+                            <input type="datetime-local" id="marcacao-data-hora-consulta" name="data_hora_consulta" required class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm"/>
+                        </div>
+                        <div>
+                            <label for="marcacao-observacao" class="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Observação</label>
+                            <textarea id="marcacao-observacao" name="observacao" rows="2" class="w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white px-4 py-2.5 text-sm" placeholder="Opcional"></textarea>
+                        </div>
+                        <p id="marcacao-erro" class="hidden text-xs text-red-600 dark:text-red-400"></p>
+                        <div class="flex justify-between gap-3 pt-2">
+                            <button type="button" id="btn-excluir-marcacao" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold">Excluir</button>
+                            <div class="flex gap-3">
+                                <button type="button" id="cancelar-modal-marcacao" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">Cancelar</button>
+                                <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold">Salvar alterações</button>
+                            </div>
+                        </div>
+                    </form>
+                    <form id="form-excluir-marcacao" method="post" class="hidden">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" id="marcacao-next-url" value="{% url 'arbitro:detalhe' arbitro.id %}">
+                    </form>
+                </div>
+            </div>
+
+            <footer class="py-10 mt-10 border-t border-[#e7ebf4] dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="flex items-center gap-2 opacity-60 text-sm">
+                    <span class="material-icons-round text-primary">health_and_safety</span>
+                    <span>© {% now "Y" %} Gol Health. Todos os direitos reservados.</span>
+                </div>
+                <div class="flex gap-6 text-sm text-[#49659c] dark:text-gray-400">
+                    <span class="cursor-default">Termos</span>
+                    <span class="cursor-default">Privacidade</span>
+                    <span class="cursor-default">Suporte</span>
+                </div>
+            </footer>
+        </div>
+    </main>
+</div>
+
+<script>
+(function () {
+    var menu = document.getElementById('user-menu');
+    var toggle = document.getElementById('user-menu-toggle');
+    if (!menu || !toggle) return;
+    toggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function (e) {
+        if (!menu.classList.contains('hidden')) {
+            if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+    });
+})();
+</script>
+<script type="application/json" id="prefill-carregar-exame-data">{{ prefill_carregar_exame_json|safe }}</script>
+<script>
+(function () {
+    var prefillCarregar = null;
+    try {
+        var _pel = document.getElementById("prefill-carregar-exame-data");
+        if (_pel && _pel.textContent) {
+            prefillCarregar = JSON.parse(_pel.textContent);
+        }
+    } catch (e) {
+        prefillCarregar = null;
+    }
+
+    var modal = document.getElementById("modal-carregar-exame");
+    var form = document.getElementById("form-carregar-exame");
+    var btnAbrir = document.getElementById("btn-carregar-exame");
+    var fecharBtn = document.getElementById("fechar-modal-carregar");
+    var cancelarBtn = document.getElementById("cancelar-modal-carregar");
+    var complement = document.getElementById("carregar-complementares");
+    var prestadorCarregar = document.getElementById("carregar-prestador-id");
+    var examesCarregarSelecionados = document.getElementById("carregar-exames-selecionados");
+    var carregarComplementarSelect = document.getElementById("carregar-complementar-exame-select");
+    var carregarComplementarAdd = document.getElementById("carregar-complementar-exame-add");
+    var carregarComplementarFiltro = document.getElementById("carregar-complementar-filtro");
+    var examesCarregarLoading = document.getElementById("carregar-exames-loading");
+    var examesComplementaresDisponiveis = [];
+    var examesComplementaresSelecionados = [];
+    var dropzone = document.getElementById("carregar-dropzone");
+    var fileInput = document.getElementById("carregar-arquivo-exame");
+    var fileNameEl = document.getElementById("carregar-arquivo-nome");
+    var blocoData = document.getElementById("bloco-data-complementar");
+    var dataCompl = document.getElementById("carregar-data-complementar");
+    var blocoDecisao = document.getElementById("bloco-decisao-aptidao");
+    var erro = document.getElementById("carregar-exame-erro");
+    var selectEstado = document.getElementById("select-estado-aptidao");
+    var estadoMsg = document.getElementById("estado-aptidao-msg");
+    var urlAtualizar = "{{ atualizar_estado_aptidao_ajax_url|escapejs }}";
+    var prestadorExamesUrl = "{{ prestador_exames_ajax_url|escapejs }}";
+    function updateArquivoNome() {
+        if (!fileInput || !fileNameEl) return;
+        var nome = (fileInput.files && fileInput.files.length) ? fileInput.files[0].name : "Nenhum ficheiro selecionado";
+        fileNameEl.textContent = nome;
+    }
+
+
+    function getCookie(name) {
+        var v = document.cookie.match("(^|;) ?" + name + "=([^;]*)(;|$)");
+        return v ? decodeURIComponent(v[2]) : null;
+    }
+
+    function escapeHtml(s) {
+        var d = document.createElement("div");
+        d.textContent = s || "";
+        return d.innerHTML;
+    }
+
+    function listarComplementaresSelecionados() {
+        return examesComplementaresSelecionados.slice();
+    }
+
+    function textoFiltroCarregarComplementar() {
+        return (carregarComplementarFiltro && carregarComplementarFiltro.value) ? carregarComplementarFiltro.value.trim().toLowerCase() : "";
+    }
+
+    function resetCarregarComplementarSelect() {
+        if (!carregarComplementarSelect) return;
+        carregarComplementarSelect.innerHTML = "<option value=\"\">Selecione um exame</option>";
+        carregarComplementarSelect.disabled = true;
+        if (carregarComplementarFiltro) {
+            carregarComplementarFiltro.value = "";
+            carregarComplementarFiltro.disabled = true;
+        }
+    }
+
+    function renderCarregarComplementarSelect() {
+        if (!carregarComplementarSelect) return;
+        carregarComplementarSelect.innerHTML = "<option value=\"\">Selecione um exame</option>";
+        var q = textoFiltroCarregarComplementar();
+        var lista = q ? examesComplementaresDisponiveis.filter(function (n) { return n.toLowerCase().indexOf(q) !== -1; }) : examesComplementaresDisponiveis.slice();
+        if (!lista.length) {
+            carregarComplementarSelect.disabled = !examesComplementaresDisponiveis.length;
+            if (carregarComplementarFiltro) carregarComplementarFiltro.disabled = !examesComplementaresDisponiveis.length;
+            return;
+        }
+        lista.forEach(function (nome) {
+            var opt = document.createElement("option");
+            opt.value = nome;
+            opt.textContent = nome;
+            carregarComplementarSelect.appendChild(opt);
+        });
+        carregarComplementarSelect.disabled = false;
+        if (carregarComplementarFiltro && examesComplementaresDisponiveis.length) carregarComplementarFiltro.disabled = false;
+    }
+
+    function renderCarregarComplementarChips() {
+        if (!examesCarregarSelecionados) return;
+        examesCarregarSelecionados.innerHTML = "";
+        if (!examesComplementaresSelecionados.length) {
+            examesCarregarSelecionados.innerHTML = "<p class=\"text-xs text-slate-500\">Nenhum exame adicional selecionado.</p>";
+            syncCarregarMode();
+            return;
+        }
+        examesComplementaresSelecionados.forEach(function (nome, idx) {
+            var chip = document.createElement("span");
+            chip.className = "inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium";
+            var txt = document.createElement("span");
+            txt.textContent = nome;
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-primary/80 hover:text-primary";
+            btn.setAttribute("aria-label", "Remover");
+            btn.textContent = "×";
+            btn.addEventListener("click", function () {
+                examesComplementaresSelecionados.splice(idx, 1);
+                renderCarregarComplementarChips();
+            });
+            chip.appendChild(txt);
+            chip.appendChild(btn);
+            examesCarregarSelecionados.appendChild(chip);
+        });
+        syncCarregarMode();
+    }
+
+    function carregarComplementarAddClick() {
+        if (!carregarComplementarSelect || !carregarComplementarSelect.value) return;
+        var nome = carregarComplementarSelect.value;
+        if (examesComplementaresSelecionados.indexOf(nome) === -1) {
+            examesComplementaresSelecionados.push(nome);
+            renderCarregarComplementarChips();
+        }
+        carregarComplementarSelect.value = "";
+    }
+
+    function renderExamesComplementares(exames) {
+        examesComplementaresDisponiveis = exames || [];
+        examesComplementaresSelecionados = [];
+        resetCarregarComplementarSelect();
+        if (!examesCarregarSelecionados) return;
+        if (!examesComplementaresDisponiveis.length) {
+            examesCarregarSelecionados.innerHTML = "<p class=\"text-xs text-amber-600 dark:text-amber-400\">Este prestador não tem exames configurados.</p>";
+            syncCarregarMode();
+            return;
+        }
+        renderCarregarComplementarSelect();
+        renderCarregarComplementarChips();
+    }
+
+    function carregarExamesComplementaresPrestador(prestadorId) {
+        if (!examesCarregarSelecionados || !examesCarregarLoading) return;
+        if (complement) complement.value = "";
+        examesComplementaresDisponiveis = [];
+        examesComplementaresSelecionados = [];
+        resetCarregarComplementarSelect();
+        if (!prestadorId) {
+            examesCarregarSelecionados.innerHTML = "<p class=\"text-xs text-slate-500\">Selecione um prestador para listar os exames disponíveis.</p>";
+            syncCarregarMode();
+            return;
+        }
+        examesCarregarLoading.classList.remove("hidden");
+        fetch(prestadorExamesUrl + "?prestador_id=" + encodeURIComponent(prestadorId), { credentials: "same-origin" })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (x) {
+                if (!x.ok || !x.j.ok) {
+                    examesCarregarSelecionados.innerHTML = "<p class=\"text-xs text-red-600\">Não foi possível carregar os exames do prestador.</p>";
+                    syncCarregarMode();
+                    return;
+                }
+                renderExamesComplementares(x.j.exames || []);
+            })
+            .catch(function () {
+                examesCarregarSelecionados.innerHTML = "<p class=\"text-xs text-red-600\">Falha ao consultar exames do prestador.</p>";
+                syncCarregarMode();
+            })
+            .finally(function () {
+                examesCarregarLoading.classList.add("hidden");
+            });
+    }
+
+    function syncCarregarMode() {
+        if (!complement || !blocoData || !blocoDecisao || !dataCompl) return;
+        var selecionados = listarComplementaresSelecionados();
+        complement.value = selecionados.join(", ");
+        var has = selecionados.length > 0;
+        if (has) {
+            blocoData.classList.remove("hidden");
+            dataCompl.setAttribute("required", "required");
+            blocoDecisao.classList.add("hidden");
+        } else {
+            blocoData.classList.add("hidden");
+            dataCompl.removeAttribute("required");
+            dataCompl.value = "";
+            blocoDecisao.classList.remove("hidden");
+        }
+    }
+
+    function abrirCarregar() {
+        if (!modal || !form) return;
+        if (erro) { erro.classList.add("hidden"); erro.textContent = ""; }
+        var dr = document.getElementById("carregar-data-realizacao");
+        var pr = document.getElementById("carregar-prestador-id");
+        var obs = document.getElementById("carregar-observacoes");
+        var exReal = document.getElementById("carregar-exames-realizados");
+        var marcacaoIdField = document.getElementById("carregar-marcacao-id");
+        var prefillWrap = document.getElementById("carregar-prefill-atos-wrap");
+        var prefillAtos = document.getElementById("carregar-prefill-atos");
+
+        if (prefillCarregar && prefillCarregar.prestador_id && prefillCarregar.data_realizacao) {
+            if (dr) dr.value = prefillCarregar.data_realizacao;
+            if (pr) pr.value = String(prefillCarregar.prestador_id);
+            if (exReal) exReal.value = prefillCarregar.exames_realizados || "";
+            if (marcacaoIdField) marcacaoIdField.value = String(prefillCarregar.marcacao_id || "");
+            if (prefillWrap && prefillAtos) {
+                var txtAtos = (prefillCarregar.exames_realizados || "").trim();
+                if (txtAtos) {
+                    prefillAtos.textContent = txtAtos;
+                    prefillWrap.classList.remove("hidden");
+                } else {
+                    prefillAtos.textContent = "";
+                    prefillWrap.classList.add("hidden");
+                }
+            }
+            if (complement) complement.value = "";
+            if (obs) obs.value = "";
+            if (fileInput) fileInput.value = "";
+            updateArquivoNome();
+            if (dataCompl) dataCompl.value = "";
+            var rAtivoP = form.querySelector('input[name="decisao_aptidao"][value="ativo"]');
+            if (rAtivoP) rAtivoP.checked = true;
+            carregarExamesComplementaresPrestador(String(prefillCarregar.prestador_id));
+        } else {
+            if (dr) dr.value = "";
+            if (pr) pr.value = "";
+            if (exReal) exReal.value = "";
+            if (marcacaoIdField) marcacaoIdField.value = "";
+            if (prefillWrap) prefillWrap.classList.add("hidden");
+            if (prefillAtos) prefillAtos.textContent = "";
+            if (complement) complement.value = "";
+            if (obs) obs.value = "";
+            if (fileInput) fileInput.value = "";
+            updateArquivoNome();
+            if (dataCompl) dataCompl.value = "";
+            examesComplementaresDisponiveis = [];
+            examesComplementaresSelecionados = [];
+            resetCarregarComplementarSelect();
+            if (examesCarregarSelecionados) {
+                examesCarregarSelecionados.innerHTML = "<p class=\"text-xs text-slate-500\">Selecione um prestador para listar os exames disponíveis.</p>";
+            }
+            var rAtivo = form.querySelector('input[name="decisao_aptidao"][value="ativo"]');
+            if (rAtivo) rAtivo.checked = true;
+            syncCarregarMode();
+        }
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    function fecharCarregar() {
+        if (!modal) return;
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    if (carregarComplementarFiltro) {
+        carregarComplementarFiltro.addEventListener("input", function () {
+            renderCarregarComplementarSelect();
+        });
+    }
+    if (carregarComplementarAdd) {
+        carregarComplementarAdd.addEventListener("click", carregarComplementarAddClick);
+    }
+
+    if (prestadorCarregar) {
+        prestadorCarregar.addEventListener("change", function () {
+            var exRealC = document.getElementById("carregar-exames-realizados");
+            var marcacaoIdFieldC = document.getElementById("carregar-marcacao-id");
+            var prefillWrapC = document.getElementById("carregar-prefill-atos-wrap");
+            var prefillAtosC = document.getElementById("carregar-prefill-atos");
+            var pid = this.value;
+            if (prefillCarregar && pid === String(prefillCarregar.prestador_id)) {
+                if (exRealC) exRealC.value = prefillCarregar.exames_realizados || "";
+                if (marcacaoIdFieldC) marcacaoIdFieldC.value = String(prefillCarregar.marcacao_id || "");
+                var t = (prefillCarregar.exames_realizados || "").trim();
+                if (prefillWrapC && prefillAtosC) {
+                    if (t) {
+                        prefillAtosC.textContent = t;
+                        prefillWrapC.classList.remove("hidden");
+                    } else {
+                        prefillWrapC.classList.add("hidden");
+                    }
+                }
+            } else {
+                if (exRealC) exRealC.value = "";
+                if (marcacaoIdFieldC) marcacaoIdFieldC.value = "";
+                if (prefillWrapC) prefillWrapC.classList.add("hidden");
+                if (prefillAtosC) prefillAtosC.textContent = "";
+            }
+            carregarExamesComplementaresPrestador(this.value);
+        });
+    }
+    if (fileInput) {
+        fileInput.addEventListener("change", updateArquivoNome);
+    }
+    if (dropzone && fileInput) {
+        dropzone.addEventListener("click", function () {
+            fileInput.click();
+        });
+        ["dragenter", "dragover"].forEach(function (evt) {
+            dropzone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add("border-primary", "bg-primary/5");
+            });
+        });
+        ["dragleave", "drop"].forEach(function (evt) {
+            dropzone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove("border-primary", "bg-primary/5");
+            });
+        });
+        dropzone.addEventListener("drop", function (e) {
+            if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+            fileInput.files = e.dataTransfer.files;
+            updateArquivoNome();
+        });
+    }
+
+    if (btnAbrir) btnAbrir.addEventListener("click", abrirCarregar);
+    if (fecharBtn) fecharBtn.addEventListener("click", fecharCarregar);
+    if (cancelarBtn) cancelarBtn.addEventListener("click", fecharCarregar);
+    if (modal) {
+        modal.addEventListener("click", function (e) {
+            if (e.target && e.target.getAttribute && e.target.getAttribute("data-fechar-carregar") !== null) fecharCarregar();
+        });
+    }
+
+    if (form) {
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            if (erro) { erro.classList.add("hidden"); erro.textContent = ""; }
+            var selecionados = listarComplementaresSelecionados();
+            if (complement) complement.value = selecionados.join(", ");
+            var hasComp = selecionados.length > 0;
+            if (hasComp && dataCompl && !(dataCompl.value || "").trim()) {
+                erro.textContent = "Indique a data e hora para o exame complementar.";
+                erro.classList.remove("hidden");
+                return;
+            }
+            if (!hasComp) {
+                var sel = form.querySelector('input[name="decisao_aptidao"]:checked');
+                if (!sel) {
+                    erro.textContent = "Escolha ativo ou inativo.";
+                    erro.classList.remove("hidden");
+                    return;
+                }
+            }
+            var fd = new FormData(form);
+            if (hasComp) {
+                fd.delete("decisao_aptidao");
+            }
+            fetch(form.action, {
+                method: "POST",
+                body: fd,
+                headers: { "X-Requested-With": "fetch", "X-CSRFToken": getCookie("csrftoken") || "" },
+                credentials: "same-origin",
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (x) {
+                    if (!x.ok || !x.j.ok) {
+                        erro.textContent = (x.j && x.j.error) ? x.j.error : "Erro ao guardar.";
+                        erro.classList.remove("hidden");
+                        return;
+                    }
+                    fecharCarregar();
+                    window.location.reload();
+                })
+                .catch(function () {
+                    erro.textContent = "Falha de comunicação.";
+                    erro.classList.remove("hidden");
+                });
+        });
+    }
+
+    if (selectEstado) {
+        var estadoAnterior = selectEstado.value;
+        selectEstado.addEventListener("focus", function () {
+            estadoAnterior = selectEstado.value;
+        });
+        selectEstado.addEventListener("change", function () {
+            if (estadoMsg) { estadoMsg.classList.add("hidden"); estadoMsg.textContent = ""; }
+            var id = selectEstado.getAttribute("data-arbitro-id");
+            var fd = new FormData();
+            fd.append("csrfmiddlewaretoken", getCookie("csrftoken") || "");
+            fd.append("arbitro_id", id);
+            fd.append("estado_aptidao", selectEstado.value);
+            fetch(urlAtualizar, {
+                method: "POST",
+                body: fd,
+                headers: { "X-Requested-With": "fetch", "X-CSRFToken": getCookie("csrftoken") || "" },
+                credentials: "same-origin",
+            })
+                .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+                .then(function (x) {
+                    if (!x.ok || !x.j.ok) {
+                        selectEstado.value = estadoAnterior;
+                        if (estadoMsg) {
+                            estadoMsg.textContent = (x.j && x.j.error) ? x.j.error : "Não foi possível atualizar.";
+                            estadoMsg.classList.remove("hidden");
+                        }
+                        return;
+                    }
+                    window.location.reload();
+                })
+                .catch(function () {
+                    selectEstado.value = estadoAnterior;
+                    if (estadoMsg) {
+                        estadoMsg.textContent = "Falha de comunicação.";
+                        estadoMsg.classList.remove("hidden");
+                    }
+                });
+        });
+    }
+})();
+</script>
+<script>
+(function () {
+    var modal = document.getElementById("modal-editar-marcacao");
+    var formEditar = document.getElementById("form-editar-marcacao");
+    var formExcluir = document.getElementById("form-excluir-marcacao");
+    if (!modal || !formEditar || !formExcluir) return;
+
+    var fecharBtn = document.getElementById("fechar-modal-marcacao");
+    var cancelarBtn = document.getElementById("cancelar-modal-marcacao");
+    var excluirBtn = document.getElementById("btn-excluir-marcacao");
+    var prestadorSelect = document.getElementById("marcacao-prestador-id");
+    var examesSelecionadosWrap = document.getElementById("marcacao-exames-selecionados");
+    var exameSelect = document.getElementById("marcacao-exame-select");
+    var exameAddBtn = document.getElementById("marcacao-exame-add");
+    var exameFiltro = document.getElementById("marcacao-exame-filtro");
+    var examesLoading = document.getElementById("marcacao-exames-loading");
+    var dataHoraInput = document.getElementById("marcacao-data-hora-consulta");
+    var observacaoInput = document.getElementById("marcacao-observacao");
+    var erro = document.getElementById("marcacao-erro");
+    var nextUrlInput = document.getElementById("marcacao-next-url");
+    var prestadorExamesUrl = "{{ prestador_exames_ajax_url|escapejs }}";
+    var examesDisponiveis = [];
+    var examesSelecionados = [];
+
+    function fecharModal() {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    function marcacaoRemoverHiddenExames() {
+        formEditar.querySelectorAll('input[data-marcacao-exame-hidden="1"]').forEach(function (node) {
+            node.remove();
+        });
+    }
+
+    function marcacaoRenderHiddenInputs() {
+        marcacaoRemoverHiddenExames();
+        examesSelecionados.forEach(function (nome) {
+            var input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "exames[]";
+            input.value = nome;
+            input.setAttribute("data-marcacao-exame-hidden", "1");
+            formEditar.appendChild(input);
+        });
+    }
+
+    function textoFiltroMarcacao() {
+        return (exameFiltro && exameFiltro.value) ? exameFiltro.value.trim().toLowerCase() : "";
+    }
+
+    function marcacaoResetSelect() {
+        if (!exameSelect) return;
+        exameSelect.innerHTML = "<option value=\"\">Selecione um exame</option>";
+        exameSelect.disabled = true;
+        if (exameFiltro) {
+            exameFiltro.value = "";
+            exameFiltro.disabled = true;
+        }
+    }
+
+    function marcacaoRenderSelect() {
+        if (!exameSelect) return;
+        exameSelect.innerHTML = "<option value=\"\">Selecione um exame</option>";
+        var q = textoFiltroMarcacao();
+        var lista = q ? examesDisponiveis.filter(function (n) { return n.toLowerCase().indexOf(q) !== -1; }) : examesDisponiveis.slice();
+        if (!lista.length) {
+            exameSelect.disabled = !examesDisponiveis.length;
+            if (exameFiltro) exameFiltro.disabled = !examesDisponiveis.length;
+            return;
+        }
+        lista.forEach(function (nome) {
+            var opt = document.createElement("option");
+            opt.value = nome;
+            opt.textContent = nome;
+            exameSelect.appendChild(opt);
+        });
+        exameSelect.disabled = false;
+        if (exameFiltro && examesDisponiveis.length) exameFiltro.disabled = false;
+    }
+
+    function marcacaoRenderSelecionados() {
+        if (!examesSelecionadosWrap) return;
+        examesSelecionadosWrap.innerHTML = "";
+        if (!examesSelecionados.length) {
+            examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-slate-500\">Nenhum exame selecionado. Escolha no menu e clique em Adicionar.</p>";
+            marcacaoRenderHiddenInputs();
+            return;
+        }
+        examesSelecionados.forEach(function (nome, idx) {
+            var chip = document.createElement("span");
+            chip.className = "inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium";
+            var txt = document.createElement("span");
+            txt.textContent = nome;
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-primary/80 hover:text-primary";
+            btn.setAttribute("aria-label", "Remover");
+            btn.textContent = "×";
+            btn.addEventListener("click", function () {
+                examesSelecionados.splice(idx, 1);
+                marcacaoRenderSelecionados();
+            });
+            chip.appendChild(txt);
+            chip.appendChild(btn);
+            examesSelecionadosWrap.appendChild(chip);
+        });
+        marcacaoRenderHiddenInputs();
+    }
+
+    function carregarExamesPrestador(prestadorId) {
+        if (!examesSelecionadosWrap || !examesLoading) return;
+        examesDisponiveis = [];
+        marcacaoResetSelect();
+        if (!prestadorId) {
+            examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-slate-500\">Selecione um prestador.</p>";
+            marcacaoRenderHiddenInputs();
+            return;
+        }
+        examesLoading.classList.remove("hidden");
+        fetch(prestadorExamesUrl + "?prestador_id=" + encodeURIComponent(prestadorId), { credentials: "same-origin" })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (x) {
+                if (!x.ok || !x.j.ok) {
+                    examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-red-600\">Não foi possível carregar os exames.</p>";
+                    return;
+                }
+                examesDisponiveis = x.j.exames || [];
+                marcacaoRenderSelect();
+                if (!examesDisponiveis.length) {
+                    examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-amber-600 dark:text-amber-400\">Este prestador não tem exames configurados.</p>";
+                    marcacaoRenderHiddenInputs();
+                    return;
+                }
+                marcacaoRenderSelecionados();
+            })
+            .catch(function () {
+                examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-red-600\">Falha ao consultar exames.</p>";
+            })
+            .finally(function () {
+                examesLoading.classList.add("hidden");
+            });
+    }
+
+    function abrirModal(btn) {
+        erro.classList.add("hidden");
+        erro.textContent = "";
+        formEditar.action = btn.getAttribute("data-edit-url") || "";
+        formExcluir.action = btn.getAttribute("data-delete-url") || "";
+        if (nextUrlInput) nextUrlInput.value = btn.getAttribute("data-next-url") || window.location.pathname;
+        prestadorSelect.value = btn.getAttribute("data-prestador-id") || "";
+        dataHoraInput.value = btn.getAttribute("data-data-hora") || "";
+        observacaoInput.value = btn.getAttribute("data-observacao") || "";
+        var rawExames = btn.getAttribute("data-exames") || "";
+        examesSelecionados = rawExames ? rawExames.split("|||").filter(Boolean) : [];
+        carregarExamesPrestador(prestadorSelect.value);
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    document.querySelectorAll("[data-open-marcacao-modal]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            abrirModal(btn);
+        });
+    });
+    if (fecharBtn) fecharBtn.addEventListener("click", fecharModal);
+    if (cancelarBtn) cancelarBtn.addEventListener("click", fecharModal);
+    modal.addEventListener("click", function (e) {
+        if (e.target && e.target.getAttribute && e.target.getAttribute("data-fechar-marcacao") !== null) {
+            fecharModal();
+        }
+    });
+    if (prestadorSelect) {
+        prestadorSelect.addEventListener("change", function () {
+            examesSelecionados = [];
+            carregarExamesPrestador(this.value);
+        });
+    }
+    if (exameFiltro) {
+        exameFiltro.addEventListener("input", function () {
+            marcacaoRenderSelect();
+        });
+    }
+    if (exameAddBtn && exameSelect) {
+        exameAddBtn.addEventListener("click", function () {
+            if (!exameSelect.value) return;
+            var nome = exameSelect.value;
+            if (examesSelecionados.indexOf(nome) === -1) {
+                examesSelecionados.push(nome);
+                marcacaoRenderSelecionados();
+            }
+            exameSelect.value = "";
+        });
+    }
+    if (excluirBtn) {
+        excluirBtn.addEventListener("click", function () {
+            formExcluir.submit();
+        });
+    }
+    formEditar.addEventListener("submit", function (e) {
+        marcacaoRenderHiddenInputs();
+        if (!examesSelecionados.length) {
+            e.preventDefault();
+            erro.textContent = "Selecione pelo menos um exame.";
+            erro.classList.remove("hidden");
+        }
+    });
+})();
+</script>
+{% if pode_agendar_modal %}
+<script>
+(function () {
+    var modal = document.getElementById("modal-agendar-arbitro");
+    var form = document.getElementById("form-agendar-arbitro");
+    if (!modal || !form) return;
+
+    var fecharBtn = document.getElementById("fechar-modal-agendar");
+    var cancelarBtn = document.getElementById("cancelar-modal-agendar");
+    var prestadorSelect = document.getElementById("detalhe-prestador-id");
+    var examesSelecionadosWrap = document.getElementById("detalhe-exames-selecionados");
+    var exameSelect = document.getElementById("detalhe-exame-select");
+    var exameAddBtn = document.getElementById("detalhe-exame-add");
+    var examesLoading = document.getElementById("detalhe-exames-loading");
+    var observacaoInput = document.getElementById("detalhe-observacao");
+    var dataHoraInput = document.getElementById("detalhe-data-hora-consulta");
+    var erro = document.getElementById("detalhe-agendar-erro");
+    var prestadorExamesUrl = "{{ prestador_exames_ajax_url }}";
+
+    var examesDisponiveis = [];
+    var examesSelecionados = [];
+
+    function resetSelectExames() {
+        if (!exameSelect) return;
+        exameSelect.innerHTML = "<option value=\"\">Selecione um exame</option>";
+        exameSelect.disabled = true;
+    }
+
+    function renderSelecionados() {
+        if (!examesSelecionadosWrap) return;
+        examesSelecionadosWrap.innerHTML = "";
+        if (!examesSelecionados.length) {
+            examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-slate-500\">Nenhum exame selecionado.</p>";
+            return;
+        }
+        examesSelecionados.forEach(function (nome, idx) {
+            var chip = document.createElement("span");
+            chip.className = "inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium";
+            var txt = document.createElement("span");
+            txt.textContent = nome;
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "text-primary/80 hover:text-primary";
+            btn.setAttribute("aria-label", "Remover");
+            btn.textContent = "×";
+            btn.addEventListener("click", function () {
+                examesSelecionados.splice(idx, 1);
+                renderSelecionados();
+                renderHiddenInputs();
+            });
+            chip.appendChild(txt);
+            chip.appendChild(btn);
+            examesSelecionadosWrap.appendChild(chip);
+        });
+    }
+
+    function renderHiddenInputs() {
+        form.querySelectorAll('input[data-detalhe-exame-hidden="1"]').forEach(function (node) {
+            node.remove();
+        });
+        examesSelecionados.forEach(function (nome) {
+            var input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "exames[]";
+            input.value = nome;
+            input.setAttribute("data-detalhe-exame-hidden", "1");
+            form.appendChild(input);
+        });
+    }
+
+    function renderExameSelect() {
+        resetSelectExames();
+        if (!exameSelect) return;
+        if (!examesDisponiveis.length) {
+            exameSelect.disabled = true;
+            return;
+        }
+        examesDisponiveis.forEach(function (nome) {
+            var opt = document.createElement("option");
+            opt.value = nome;
+            opt.textContent = nome;
+            exameSelect.appendChild(opt);
+        });
+        exameSelect.disabled = false;
+    }
+
+    function carregarExamesPrestador(prestadorId) {
+        examesDisponiveis = [];
+        examesSelecionados = [];
+        renderSelecionados();
+        renderHiddenInputs();
+        resetSelectExames();
+        if (!prestadorId) {
+            if (examesSelecionadosWrap) {
+                examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-slate-500\">Selecione um prestador.</p>";
+            }
+            return;
+        }
+        examesLoading.classList.remove("hidden");
+        fetch(prestadorExamesUrl + "?prestador_id=" + encodeURIComponent(prestadorId), { credentials: "same-origin" })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (x) {
+                if (!x.ok || !x.j.ok) {
+                    if (examesSelecionadosWrap) {
+                        examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-red-600\">Não foi possível carregar os exames.</p>";
+                    }
+                    return;
+                }
+                examesDisponiveis = x.j.exames || [];
+                renderExameSelect();
+                if (!examesDisponiveis.length && examesSelecionadosWrap) {
+                    examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-amber-600 dark:text-amber-400\">Este prestador não tem exames configurados.</p>";
+                }
+            })
+            .catch(function () {
+                if (examesSelecionadosWrap) {
+                    examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-red-600\">Falha ao consultar exames.</p>";
+                }
+            })
+            .finally(function () {
+                examesLoading.classList.add("hidden");
+            });
+    }
+
+    function abrirModal() {
+        erro.classList.add("hidden");
+        erro.textContent = "";
+        prestadorSelect.value = "";
+        observacaoInput.value = "";
+        dataHoraInput.value = "";
+        examesDisponiveis = [];
+        examesSelecionados = [];
+        renderHiddenInputs();
+        resetSelectExames();
+        if (examesSelecionadosWrap) {
+            examesSelecionadosWrap.innerHTML = "<p class=\"text-xs text-slate-500\">Selecione um prestador.</p>";
+        }
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    }
+
+    function fecharModal() {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+    }
+
+    document.querySelectorAll("[data-open-agendar-modal]").forEach(function (btn) {
+        btn.addEventListener("click", abrirModal);
+    });
+    if (fecharBtn) fecharBtn.addEventListener("click", fecharModal);
+    if (cancelarBtn) cancelarBtn.addEventListener("click", fecharModal);
+    modal.addEventListener("click", function (e) {
+        if (e.target === modal) fecharModal();
+    });
+    prestadorSelect.addEventListener("change", function () {
+        carregarExamesPrestador(this.value);
+    });
+    if (exameAddBtn) {
+        exameAddBtn.addEventListener("click", function () {
+            if (!exameSelect || !exameSelect.value) return;
+            var nome = exameSelect.value;
+            if (examesSelecionados.indexOf(nome) === -1) {
+                examesSelecionados.push(nome);
+                renderSelecionados();
+                renderHiddenInputs();
+            }
+            exameSelect.value = "";
+        });
+    }
+
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        erro.classList.add("hidden");
+        erro.textContent = "";
+        if (!examesSelecionados.length) {
+            erro.textContent = "Selecione pelo menos um exame.";
+            erro.classList.remove("hidden");
+            return;
+        }
+        var fd = new FormData(form);
+        if (!dataHoraInput.value.trim()) {
+            erro.textContent = "Indique a data e hora da consulta.";
+            erro.classList.remove("hidden");
+            return;
+        }
+        fetch(form.action, {
+            method: "POST",
+            body: fd,
+            headers: { "X-Requested-With": "fetch" },
+            credentials: "same-origin",
+        })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (x) {
+                if (!x.ok || !x.j.ok) {
+                    erro.textContent = (x.j && x.j.error) ? x.j.error : "Erro ao agendar.";
+                    erro.classList.remove("hidden");
+                    return;
+                }
+                fecharModal();
+                window.location.reload();
+            })
+            .catch(function () {
+                erro.textContent = "Falha de comunicação.";
+                erro.classList.remove("hidden");
+            });
+    });
+})();
+</script>
+{% endif %}
+</body>
+</html>

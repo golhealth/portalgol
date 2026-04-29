@@ -1,0 +1,34 @@
+name: gol-health
+region: fra
+services:
+  - name: web
+    github:
+      repo: REPLACE_WITH_YOUR_GITHUB_REPO
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    run_command: >
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      gunicorn config.wsgi --log-file - --workers 3 --timeout 120
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8080
+    envs:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".ondigitalocean.app"
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: "https://*.ondigitalocean.app"
+      - key: DJANGO_SECRET_KEY
+        type: SECRET
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    production: false

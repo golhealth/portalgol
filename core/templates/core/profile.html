@@ -1,0 +1,309 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-PT">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Perfil do Utilizador | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+    <div class="flex min-h-screen">
+        <!-- Sidebar igual à dashboard -->
+        {% include "core/partials/app_sidebar.html" %}
+
+        <!-- Conteúdo principal -->
+        <main class="flex-1 ml-64 min-h-screen">
+            {% include "core/partials/app_header.html" %}
+
+            <div class="max-w-6xl mx-auto px-8 py-12">
+                {% if messages %}
+                    <div class="mb-6 space-y-3">
+                        {% for message in messages %}
+                            <div class="rounded-lg px-4 py-3 text-sm {% if 'success' in message.tags %}bg-green-50 text-green-800 border border-green-200{% elif 'error' in message.tags %}bg-red-50 text-red-800 border border-red-200{% else %}bg-slate-100 text-slate-800{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-12">
+                    <h2 class="text-5xl font-extrabold text-[#003461] leading-none tracking-tight mb-2">O Meu Perfil</h2>
+                    <p class="text-lg text-slate-500 font-medium">Gerencie as suas informações pessoais e configurações de segurança.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <section class="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl p-8 shadow-[0px_8px_32px_rgba(25,28,30,0.04)] relative overflow-hidden">
+                        <div class="flex items-start justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-[#003461] mb-1">Informações Pessoais</h3>
+                                <p class="text-sm text-slate-500">Dados fundamentais da sua conta.</p>
+                            </div>
+                            <span class="material-symbols-outlined text-[#006492] bg-[#d3e4ff] p-2 rounded-lg">person</span>
+                        </div>
+
+                        <div class="flex flex-col md:flex-row gap-10">
+                            <div class="flex-shrink-0 flex flex-col items-center gap-4">
+                                <form method="post" enctype="multipart/form-data" class="relative">
+                                    {% csrf_token %}
+                                    <input type="file" id="avatar-input" name="avatar" accept="image/*" class="hidden"/>
+                                    <button type="button" id="avatar-trigger" class="relative group rounded-2xl border-4 border-white dark:border-slate-800 shadow-lg overflow-hidden">
+                                        {% if perfil.avatar %}
+                                            <img src="{{ perfil.avatar.url }}" alt="Foto de perfil" class="w-32 h-32 object-cover"/>
+                                        {% else %}
+                                            <div class="w-32 h-32 rounded-2xl bg-slate-300 dark:bg-slate-700 flex items-center justify-center text-4xl font-bold text-slate-700 dark:text-slate-100">
+                                                {{ user.get_username|first|upper }}
+                                            </div>
+                                        {% endif %}
+                                        <span class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></span>
+                                        <span class="absolute bottom-2 right-2 inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#003461] text-white shadow">
+                                            <span class="material-symbols-outlined text-base">photo_camera</span>
+                                        </span>
+                                    </button>
+                                </form>
+                                <p class="text-xs text-slate-400 font-medium">Avatar da conta de utilizador.</p>
+                            </div>
+
+                            <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-1 md:col-span-2">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Nome completo</label>
+                                    <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-4 py-3 text-slate-700 dark:text-slate-100" type="text" value="{% if user.first_name or user.last_name %}{{ user.first_name }} {{ user.last_name }}{% else %}—{% endif %}" readonly/>
+                                </div>
+                                <div class="space-y-1 md:col-span-2">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">E-mail profissional</label>
+                                    <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-4 py-3 text-slate-700 dark:text-slate-100" type="email" value="{{ user.email|default:'—' }}" readonly/>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Utilizador interno</label>
+                                    <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-4 py-3 text-slate-700 dark:text-slate-100" type="text" value="{{ user.username }}" readonly/>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Tipo de conta</label>
+                                    <input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-4 py-3 text-slate-700 dark:text-slate-100" type="text" value="{% if user.is_superuser %}Administrador{% else %}Utilizador{% endif %}" readonly/>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="lg:col-span-4 bg-[#003461] text-white rounded-xl p-8 shadow-xl flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold">Detalhes da Conta</h3>
+                                <span class="material-symbols-outlined text-[#7fc9fe]">badge</span>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-[#a3c9ff]">Último acesso</label>
+                                    <p class="text-lg font-medium border-b border-[#004b87] pb-2">{% if user.last_login %}{{ user.last_login|date:"d/m/Y H:i" }}{% else %}Nunca{% endif %}</p>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-[#a3c9ff]">Estado</label>
+                                    <p class="text-lg font-medium border-b border-[#004b87] pb-2">{% if user.is_active %}Ativo{% else %}Inativo{% endif %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-8 p-4 bg-white/10 rounded-lg border border-white/5 backdrop-blur-sm">
+                            <p class="text-xs text-[#cae6ff] leading-relaxed">As permissões desta conta são definidas pelos grupos associados no módulo de utilizadores.</p>
+                        </div>
+                    </section>
+
+                    <section class="lg:col-span-7 bg-slate-100 dark:bg-slate-800 rounded-xl p-8 relative">
+                        <div class="flex items-start justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-[#003461] mb-1">Segurança da Conta</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-300">Mantenha os seus dados protegidos.</p>
+                            </div>
+                            <span class="material-symbols-outlined text-[#006492]">security</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest border-b border-slate-300 dark:border-slate-600 pb-2">Palavra-passe</h4>
+                                <div class="space-y-4">
+                                    <p class="text-sm text-slate-600 dark:text-slate-300">Pode atualizar a sua palavra-passe a qualquer momento.</p>
+                                    <button type="button" id="open-password-modal-main" class="inline-flex w-full justify-center bg-[#003461] text-white font-bold py-3 rounded-lg shadow-lg hover:brightness-110 transition-all text-sm">Alterar Palavra-passe</button>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <h4 class="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest border-b border-slate-300 dark:border-slate-600 pb-2">Autenticação</h4>
+                                <div class="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-[#006492]">mark_email_read</span>
+                                        <div>
+                                            <p class="text-sm font-bold text-[#003461] dark:text-[#a3c9ff]">Verificação por código</p>
+                                            <p class="text-[10px] text-slate-400">Login com validação por e-mail</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">Ativo</span>
+                                </div>
+                                <p class="text-xs text-slate-500 dark:text-slate-300 italic">A plataforma exige código de verificação após inserir e-mail e palavra-passe.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="lg:col-span-5 bg-slate-200/60 dark:bg-slate-700/40 rounded-xl p-8 border border-white/60 dark:border-slate-600">
+                        <div class="flex items-start justify-between mb-8">
+                            <div>
+                                <h3 class="text-xl font-bold text-[#003461] dark:text-[#a3c9ff] mb-1">Notificações</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-300">Preferências de aviso da conta.</p>
+                            </div>
+                            <span class="material-symbols-outlined text-[#003461] dark:text-[#a3c9ff]">notifications_active</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between py-3 border-b border-slate-300 dark:border-slate-600">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-slate-500">mail</span>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-700 dark:text-slate-100">Alertas por e-mail</p>
+                                        <p class="text-xs text-slate-500">Códigos de login e avisos de segurança</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">Ativo</span>
+                            </div>
+                            <div class="flex items-center justify-between py-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-slate-500">campaign</span>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-700 dark:text-slate-100">Comunicados gerais</p>
+                                        <p class="text-xs text-slate-500">Informações da plataforma</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-600">Padrão</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="mt-12 pt-8 border-t border-slate-300/40 dark:border-slate-700/40 flex justify-between items-center">
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="text-red-600 font-bold flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg transition-colors">
+                            <span class="material-symbols-outlined">logout</span>
+                            Terminar sessão
+                        </button>
+                    </form>
+                    <div class="flex gap-4">
+                        <a href="{% url 'core:dashboard' %}" class="px-8 py-3 rounded-lg font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">Voltar</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="password-modal" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black/40" id="password-modal-backdrop"></div>
+        <div class="absolute inset-0 p-4 flex items-center justify-center">
+            <div class="w-full max-w-lg rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl">
+                <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <h4 class="text-lg font-bold text-slate-900 dark:text-white">Alterar Palavra-passe</h4>
+                    <button type="button" id="password-modal-close" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <span class="material-symbols-outlined text-slate-500">close</span>
+                    </button>
+                </div>
+                <form method="post" class="p-5 space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password"/>
+                    <div>
+                        <label for="{{ password_form.old_password.id_for_label }}" class="block text-sm font-medium mb-1.5">Palavra-passe atual</label>
+                        {{ password_form.old_password }}
+                        {% for e in password_form.old_password.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ password_form.new_password1.id_for_label }}" class="block text-sm font-medium mb-1.5">Nova palavra-passe</label>
+                        {{ password_form.new_password1 }}
+                        {% for e in password_form.new_password1.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ password_form.new_password2.id_for_label }}" class="block text-sm font-medium mb-1.5">Confirmar nova palavra-passe</label>
+                        {{ password_form.new_password2 }}
+                        {% for e in password_form.new_password2.errors %}<p class="mt-1 text-xs text-red-600">{{ e }}</p>{% endfor %}
+                    </div>
+                    {% if password_form.non_field_errors %}
+                        <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{{ password_form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="pt-2 flex justify-end gap-2">
+                        <button type="button" id="password-modal-cancel" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#003461] hover:brightness-110">Atualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const input = document.getElementById('avatar-input');
+            const trigger = document.getElementById('avatar-trigger');
+            if (input && trigger) {
+                trigger.addEventListener('click', function () {
+                    input.click();
+                });
+                input.addEventListener('change', function () {
+                    if (input.files && input.files.length > 0) {
+                        input.form.submit();
+                    }
+                });
+            }
+        })();
+
+        (function () {
+            const modal = document.getElementById('password-modal');
+            const openMain = document.getElementById('open-password-modal-main');
+            const openFooter = document.getElementById('open-password-modal-footer');
+            const closeBtn = document.getElementById('password-modal-close');
+            const cancelBtn = document.getElementById('password-modal-cancel');
+            const backdrop = document.getElementById('password-modal-backdrop');
+            if (!modal) return;
+            function openModal() { modal.classList.remove('hidden'); }
+            function closeModal() { modal.classList.add('hidden'); }
+            if (openMain) openMain.addEventListener('click', openModal);
+            if (openFooter) openFooter.addEventListener('click', openModal);
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+            if (backdrop) backdrop.addEventListener('click', closeModal);
+            const hasPasswordErrors = {{ password_form.errors|yesno:"true,false" }};
+            const openByQuery = new URLSearchParams(window.location.search).get('pwd') === '1';
+            if (hasPasswordErrors || openByQuery) openModal();
+        })();
+
+        (function () {
+            const menu = document.getElementById('user-menu');
+            const toggle = document.getElementById('user-menu-toggle');
+            if (!menu || !toggle) return;
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function (e) {
+                if (!menu.classList.contains('hidden')) {
+                    if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                        menu.classList.add('hidden');
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light" lang="pt-PT">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Dashboard de Prestadores | Gol Health</title>
+    <link rel="icon" type="image/png" href="{% static 'core/img/Faveicon.png' %}">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0d59f2",
+                        cyan: "#00B4D8",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        display: ["Lexend"],
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+    <div class="flex min-h-screen">
+        <!-- Sidebar igual à dashboard principal -->
+        {% include "core/partials/app_sidebar.html" %}
+
+        <!-- Conteúdo principal -->
+        <main class="flex-1 ml-64 flex flex-col min-h-screen">
+            <!-- Header -->
+            {% include "core/partials/app_header.html" %}
+
+            <div class="p-8 flex-1">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 class="text-2xl font-display font-bold text-slate-900 dark:text-white">Dashboard de Prestadores</h2>
+                        <p class="text-slate-500 dark:text-slate-400">Gestão completa de prestadores de serviços médicos.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <a href="{% url 'prestador:lista' %}" class="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors border border-slate-200 dark:border-slate-700">
+                            <span class="material-icons-round text-sm">list</span>
+                            Ver Lista
+                        </a>
+                        <a href="{% url 'prestador:novo' %}" class="bg-primary hover:bg-opacity-90 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-medium transition-colors shadow-lg shadow-primary/20">
+                            <span class="material-icons-round text-sm">add</span>
+                            Novo Prestador
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-primary/10 rounded-xl text-primary">
+                                <span class="material-icons-round">medical_services</span>
+                            </div>
+                            {% if crescimento_percentual > 0 %}
+                            <span class="text-green-500 text-xs font-bold flex items-center">+{{ crescimento_percentual }}% <span class="material-icons-round text-xs">arrow_upward</span></span>
+                            {% endif %}
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Prestadores</p>
+                        <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{{ total_prestadores }}</h3>
+                    </div>
+
+                    <div class="bg-primary/5 dark:bg-primary/10 p-6 rounded-xl border border-primary/20 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-primary/20 rounded-xl text-primary">
+                                <span class="material-icons-round">verified</span>
+                            </div>
+                            <span class="bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Ativo</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm font-medium">Prestadores Ativos</p>
+                        <h3 class="text-2xl font-bold mt-1 text-primary">{{ prestadores_ativos }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-cyan/10 rounded-xl text-cyan">
+                                <span class="material-icons-round">check_circle</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Conformes</p>
+                        <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{{ prestadores_conformes }}</h3>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
+                                <span class="material-icons-round">pending</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Em Negociação</p>
+                        <h3 class="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{{ prestadores_em_negociacao }}</h3>
+                    </div>
+                </div>
+
+                <!-- Quick Actions e estatísticas -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                        <h3 class="font-display font-bold text-lg mb-4 text-slate-900 dark:text-white">Ações Rápidas</h3>
+                        <div class="space-y-3">
+                            <a href="{% url 'prestador:novo' %}" class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <span class="material-icons-round text-primary">add_business</span>
+                                <div>
+                                    <p class="font-semibold text-sm text-slate-900 dark:text-white">Registar Novo Prestador</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Adicionar um novo prestador de serviços à base de dados</p>
+                                </div>
+                            </a>
+                            <a href="{% url 'prestador:lista' %}" class="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <span class="material-icons-round text-primary">list</span>
+                                <div>
+                                    <p class="font-semibold text-sm text-slate-900 dark:text-white">Ver Lista Completa</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Visualizar todos os prestadores registados</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                        <h3 class="font-display font-bold text-lg mb-4 text-slate-900 dark:text-white">Estatísticas por Estado</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-primary"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Ativos</span>
+                                </div>
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">{{ prestadores_ativos }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-cyan"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Conformes</span>
+                                </div>
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">{{ prestadores_conformes }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Em Negociação</span>
+                                </div>
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">{{ prestadores_em_negociacao }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700"></span>
+                                    <span class="text-sm text-slate-600 dark:text-slate-400 font-medium">Inativos</span>
+                                </div>
+                                <span class="text-sm font-bold text-slate-900 dark:text-white">{{ prestadores_inativos }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        (function () {
+            const menu = document.getElementById('user-menu');
+            const toggle = document.getElementById('user-menu-toggle');
+            if (!menu || !toggle) return;
+
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!menu.classList.contains('hidden')) {
+                    if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+                        menu.classList.add('hidden');
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
+
