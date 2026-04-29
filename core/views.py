@@ -163,20 +163,25 @@ def login_view(request):
                 }
                 request.session["mfa_attempts"] = 0
 
-                # Envio de e-mail: por agora, usamos backend padrão (em DEBUG, consola)
-                from django.core.mail import send_mail
-
                 subject = "Código de verificação - Gol Health"
                 message = f"O seu código de verificação é: {code}"
-                send_mail(
-                    subject,
-                    message,
-                    getattr(settings, "DEFAULT_FROM_EMAIL", None),
-                    [request.session["mfa_pending"]["email"]],
-                    fail_silently=True,
-                )
-
-                return redirect(f"{request.path}?mfa=1")
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                        [request.session["mfa_pending"]["email"]],
+                        fail_silently=False,
+                    )
+                except Exception:
+                    request.session.pop("mfa_pending", None)
+                    request.session.pop("mfa_attempts", None)
+                    error = (
+                        "Nao foi possivel enviar o codigo MFA por e-mail. "
+                        "Verifique a configuracao SMTP e tente novamente."
+                    )
+                else:
+                    return redirect(f"{request.path}?mfa=1")
 
     context = {
         "session_expired": session_expired,

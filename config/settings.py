@@ -157,8 +157,15 @@ LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Remetente para send_mail (criação de utilizadores, MFA). Em produção configure também EMAIL_*.
-DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+# E-mail (MFA, criação de utilizadores, notificações).
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'webmaster@localhost')
 
 # Logout por inatividade (sem requests) para utilizador autenticado.
 # Após este tempo, o utilizador é forçado a fazer login novamente.
