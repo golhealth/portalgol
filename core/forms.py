@@ -1,11 +1,40 @@
 from django import forms
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import Group
 
 from .models import Categoria, Departamento, Epoca, Modalidade
 from .password_utils import username_a_partir_do_email
 
 User = get_user_model()
+
+
+class PasswordResetPorEmailForm(PasswordResetForm):
+    """Recuperação de palavra-passe pelo e-mail (como no login)."""
+
+    email = forms.EmailField(
+        label="E-mail",
+        max_length=254,
+        widget=forms.EmailInput(
+            attrs={
+                "class": (
+                    "w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-700 "
+                    "bg-white dark:bg-slate-900 text-slate-900 dark:text-white "
+                    "focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all "
+                    "placeholder:text-slate-400"
+                ),
+                "placeholder": "Introduza o seu e-mail",
+                "autofocus": True,
+            }
+        ),
+    )
+
+    def get_users(self, email):
+        email_normalizado = (email or "").strip()
+        if not email_normalizado:
+            return []
+        ativos = User.objects.filter(email__iexact=email_normalizado, is_active=True)
+        return (u for u in ativos if u.has_usable_password())
 
 
 class LoginForm(forms.Form):

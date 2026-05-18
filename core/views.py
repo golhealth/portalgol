@@ -174,6 +174,8 @@ def login_view(request):
                         fail_silently=False,
                     )
                 except Exception:
+                    if settings.DEBUG:
+                        return redirect(f"{request.path}?mfa=1")
                     request.session.pop("mfa_pending", None)
                     request.session.pop("mfa_attempts", None)
                     error = (

@@ -4,16 +4,26 @@ from django.db import models
 class Exame(models.Model):
     # Mantemos o mesmo model (para não quebrar relações), mas mudamos os
     # textos para o termo "Ato Médico" conforme pedido.
-    nome = models.CharField("Nome do Ato Médico", max_length=255, unique=True)
+    codigo = models.PositiveIntegerField(
+        "Código",
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Código numérico do ato (ex.: 100).",
+    )
+    nome = models.CharField("Descritivo", max_length=255, unique=True)
+    abreviatura = models.CharField("Abreviatura", max_length=50, blank=True, default="")
     ativo = models.BooleanField("Ativo", default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Ato Médico"
         verbose_name_plural = "Atos Médicos"
-        ordering = ["nome"]
+        ordering = ["codigo", "nome"]
 
     def __str__(self) -> str:
+        if self.abreviatura:
+            return f"{self.codigo or '—'} · {self.abreviatura} — {self.nome}"
         return self.nome
 
 

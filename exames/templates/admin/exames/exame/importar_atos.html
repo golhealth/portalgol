@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{{ changelist_url }}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+    <p>
+        Carregue o ficheiro <strong>LISTAGEM TIPO DE ATOS.xlsx</strong>.
+        Serão importadas apenas as colunas <strong>Código</strong>, <strong>Descritivo</strong> e
+        <strong>Abreviatura</strong> (a coluna Observações é ignorada).
+    </p>
+    <p>
+        Se o código já existir, o registo é atualizado. Registos novos são criados como ativos.
+    </p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
+        {% csrf_token %}
+        <fieldset class="module aligned">
+            {% for field in form %}
+            <div class="form-row">
+                {{ field.errors }}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="required">{{ field.label }}:</label>
+                    {{ field }}
+                </div>
+            </div>
+            {% endfor %}
+        </fieldset>
+        <div class="submit-row">
+            <input type="submit" value="Importar" class="default">
+            <a href="{{ changelist_url }}" class="button cancel-link">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

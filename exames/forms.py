@@ -71,15 +71,43 @@ class MarcacaoExameEditForm(forms.ModelForm):
         )
 
 
+class ImportAtosExcelForm(forms.Form):
+    """Upload da listagem de atos médicos (.xlsx)."""
+
+    arquivo = forms.FileField(
+        label="Ficheiro Excel (.xlsx)",
+        widget=forms.ClearableFileInput(attrs={"accept": ".xlsx"}),
+    )
+
+    def clean_arquivo(self):
+        uploaded = self.cleaned_data["arquivo"]
+        name = (uploaded.name or "").lower()
+        if not name.endswith(".xlsx"):
+            raise ValidationError("O ficheiro deve estar no formato .xlsx.")
+        return uploaded
+
+
 class ExameForm(forms.ModelForm):
     class Meta:
         model = Exame
-        fields = ["nome", "ativo"]
+        fields = ["codigo", "nome", "abreviatura", "ativo"]
         widgets = {
+            "codigo": forms.NumberInput(
+                attrs={
+                    "class": "w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white",
+                    "placeholder": "Ex: 100",
+                }
+            ),
             "nome": forms.TextInput(
                 attrs={
                     "class": "w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white",
-                    "placeholder": "Ex: Cardiológico",
+                    "placeholder": "Ex: Consulta Médica",
+                }
+            ),
+            "abreviatura": forms.TextInput(
+                attrs={
+                    "class": "w-full rounded-lg border-[#d1d5db] dark:bg-slate-800 dark:border-slate-700 dark:text-white",
+                    "placeholder": "Ex: CM",
                 }
             ),
             "ativo": forms.CheckboxInput(

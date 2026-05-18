@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+    <li>
+        <a href="{% url 'admin:exames_exame_importar_excel' %}" class="addlink">
+            Importar Excel
+        </a>
+    </li>
+    {{ block.super }}
+{% endblock %}

@@ -130,6 +130,10 @@ class LoginRequiredMiddleware:
 
         self.static_prefixes = ("/static/",)
         self.admin_prefixes = ("/admin/",)
+        self.public_prefixes = (
+            "/conta/password_reset",
+            "/conta/reset/",
+        )
         self.excluded_exact_paths = {"/favicon.ico", "/robots.txt"}
 
     def __call__(self, request):
@@ -146,6 +150,9 @@ class LoginRequiredMiddleware:
             return self.get_response(request)
 
         if path.startswith(self.admin_prefixes):
+            return self.get_response(request)
+
+        if any(path.startswith(p) for p in self.public_prefixes):
             return self.get_response(request)
 
         # Permite acesso ao login apenas.
