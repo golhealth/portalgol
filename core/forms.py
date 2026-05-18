@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group
 
 from .models import Categoria, Departamento, Epoca, Modalidade
 from .password_utils import username_a_partir_do_email
+from .site_url import email_site_parts
 
 User = get_user_model()
 
@@ -35,6 +36,31 @@ class PasswordResetPorEmailForm(PasswordResetForm):
             return []
         ativos = User.objects.filter(email__iexact=email_normalizado, is_active=True)
         return (u for u in ativos if u.has_usable_password())
+
+    def save(
+        self,
+        domain_override=None,
+        subject_template_name="registration/password_reset_subject.txt",
+        email_template_name="registration/password_reset_email.html",
+        use_https=False,
+        token_generator=None,
+        from_email=None,
+        request=None,
+        html_email_template_name=None,
+        extra_email_context=None,
+    ):
+        protocol, domain = email_site_parts(request)
+        return super().save(
+            domain_override=domain,
+            subject_template_name=subject_template_name,
+            email_template_name=email_template_name,
+            use_https=(protocol == "https"),
+            token_generator=token_generator,
+            from_email=from_email,
+            request=request,
+            html_email_template_name=html_email_template_name,
+            extra_email_context=extra_email_context,
+        )
 
 
 class LoginForm(forms.Form):

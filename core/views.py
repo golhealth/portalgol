@@ -46,6 +46,7 @@ from .models import (
     PerfilConta,
 )
 from .password_utils import gerar_palavra_passe_segura, username_a_partir_do_email
+from .site_url import absolute_url
 from exames.forms import ExameForm
 from associacao.models import Associacao
 from arbitro.models import Arbitro, RealizacaoExameArbitro
@@ -516,12 +517,15 @@ def criar_utilizador(request):
                     f"Verifique a configuração de e-mail ou tente novamente. ({exc})",
                 )
             else:
+                login_url = absolute_url("/", request=request)
                 corpo = (
                     f"Olá,\n\n"
                     f"Foi criada uma conta no Gol Health para o e-mail {email}.\n\n"
+                    f"Aceda à plataforma em:\n{login_url}\n\n"
                     f"Palavra-passe temporária: {senha_temp}\n\n"
-                    f"Por motivos de segurança, no primeiro acesso terá de definir uma nova "
-                    f"palavra-passe antes de utilizar o sistema.\n\n"
+                    f"Utilize o e-mail acima para iniciar sessão. Por motivos de segurança, "
+                    f"no primeiro acesso terá de definir uma nova palavra-passe antes de "
+                    f"utilizar o sistema.\n\n"
                     f"— Gol Health"
                 )
                 try:

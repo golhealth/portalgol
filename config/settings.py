@@ -35,6 +35,12 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '127.0.0.1
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() for origin in os.getenv('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()
 ]
+# URL pública da app (ex.: https://gol-health-xxxxx.ondigitalocean.app). Usada em links de e-mail.
+PUBLIC_SITE_URL = os.getenv('PUBLIC_SITE_URL', '').strip().rstrip('/')
+
+# DigitalOcean App Platform / proxies reversos
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 
 # Application definition
