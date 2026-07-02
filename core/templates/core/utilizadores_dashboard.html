@@ -96,13 +96,24 @@
       </section>
 
       <section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
-          <h3 class="font-semibold">Lista detalhada de utilizadores</h3>
-        </div>
+        <form method="post" action="{% url 'core:utilizadores_apagar_em_massa' %}" id="bulk-users-form" class="hidden">
+          {% csrf_token %}
+          {% if search_q %}<input type="hidden" name="q" value="{{ search_q }}"/>{% endif %}
+        </form>
+          <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h3 class="font-semibold">Lista detalhada de utilizadores</h3>
+            <button type="submit" form="bulk-users-form" id="bulk-delete-btn" class="hidden inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition-colors" onclick="return confirm('Tem a certeza que deseja apagar os utilizadores selecionados? Esta ação não pode ser desfeita.');">
+              <span class="material-icons-round text-base">delete</span>
+              Apagar selecionados (<span id="bulk-delete-count">0</span>)
+            </button>
+          </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-left border-b border-slate-200 dark:border-slate-800">
+                <th class="px-4 py-3 w-10">
+                  <input type="checkbox" form="bulk-users-form" id="select-all-users" class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/50" title="Selecionar todos"/>
+                </th>
                 <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Nome</th>
                 <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">E-mail</th>
                 <th class="px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Departamento</th>
@@ -115,6 +126,11 @@
             <tbody>
               {% for u in users %}
               <tr class="border-t border-slate-100 dark:border-slate-800">
+                <td class="px-4 py-3">
+                  {% if request.user.pk != u.pk %}
+                  <input type="checkbox" form="bulk-users-form" name="user_ids" value="{{ u.pk }}" class="user-select-checkbox h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/50"/>
+                  {% endif %}
+                </td>
                 <td class="px-4 py-3 font-medium">{% if u.first_name or u.last_name %}{{ u.first_name }} {{ u.last_name }}{% else %}{{ u.username }}{% endif %}</td>
                 <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ u.email|default:'—' }}</td>
                 <td class="px-4 py-3">{% if u.departamento_nome %}{{ u.departamento_nome }}{% else %}—{% endif %}</td>
@@ -135,7 +151,7 @@
                 </td>
               </tr>
               {% empty %}
-              <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">Nenhum utilizador encontrado.</td></tr>
+              <tr><td colspan="8" class="px-4 py-8 text-center text-slate-500">Nenhum utilizador encontrado.</td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -145,5 +161,39 @@
   </main>
 </div>
 <script>(function(){var m=document.getElementById('user-menu');var t=document.getElementById('user-menu-toggle');if(!m||!t)return;t.addEventListener('click',function(e){e.stopPropagation();m.classList.toggle('hidden');});document.addEventListener('click',function(e){if(!m.classList.contains('hidden')){if(!m.contains(e.target)&&!t.contains(e.target)){m.classList.add('hidden');}}});})();</script>
+<script>
+(function () {
+  var selectAll = document.getElementById('select-all-users');
+  var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.user-select-checkbox'));
+  var deleteBtn = document.getElementById('bulk-delete-btn');
+  var deleteCount = document.getElementById('bulk-delete-count');
+  if (!selectAll || !deleteBtn || !deleteCount) return;
+
+  function selectedCount() {
+    return checkboxes.filter(function (cb) { return cb.checked; }).length;
+  }
+
+  function refreshBulkUi() {
+    var n = selectedCount();
+    deleteCount.textContent = String(n);
+    deleteBtn.classList.toggle('hidden', n === 0);
+    if (checkboxes.length) {
+      selectAll.indeterminate = n > 0 && n < checkboxes.length;
+      selectAll.checked = n === checkboxes.length;
+    }
+  }
+
+  selectAll.addEventListener('change', function () {
+    checkboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
+    refreshBulkUi();
+  });
+
+  checkboxes.forEach(function (cb) {
+    cb.addEventListener('change', refreshBulkUi);
+  });
+
+  refreshBulkUi();
+})();
+</script>
 </body>
 </html>

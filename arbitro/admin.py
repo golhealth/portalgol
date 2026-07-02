@@ -8,12 +8,13 @@ class ArbitroAdmin(admin.ModelAdmin):
     list_display = (
         "nome_completo",
         "email",
+        "associacao_futebol",
         "categoria",
         "estado_aptidao",
         "ativo",
         "criado_em",
     )
-    list_filter = ("ativo", "estado_aptidao", "categoria")
+    list_filter = ("ativo", "estado_aptidao", "associacao_futebol", "categoria")
     search_fields = ("nome_completo", "email")
 
 

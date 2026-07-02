@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.forms import formset_factory
 from django.views.decorators.http import require_http_methods
 
-from arbitro.models import RealizacaoExameArbitro
+from arbitro.models import Arbitro, RealizacaoExameArbitro
 from prestador.realizacao_precos import (
     atos_display_para_linha,
     detalhes_e_subtotal,
@@ -81,8 +81,15 @@ def associacao_fatura_exames(request, pk: int):
     precos_associacao = _precos_exames_por_associacao(associacao)
     fallback_nome_unico = partial(_unico_nome_preco_associacao, associacao.pk)
 
+    arbitros_associacao = list(
+        Arbitro.objects.filter(associacao_futebol=associacao).order_by("nome_completo")
+    )
+    totais_por_arbitro: dict[int, dict] = {
+        a.pk: {"arbitro": a, "total": Decimal("0"), "qtd_realizacoes": 0}
+        for a in arbitros_associacao
+    }
+
     linhas = []
-    totais_por_arbitro: dict[int, dict] = {}
     total_geral = Decimal("0")
     cache_marcacao: dict[tuple[int, int], list[str]] = {}
 
@@ -111,8 +118,10 @@ def associacao_fatura_exames(request, pk: int):
             totais_por_arbitro[aid] = {
                 "arbitro": r.arbitro,
                 "total": Decimal("0"),
+                "qtd_realizacoes": 0,
             }
         totais_por_arbitro[aid]["total"] += subtotal
+        totais_por_arbitro[aid]["qtd_realizacoes"] += 1
         total_geral += subtotal
 
     resumo_arbitros = sorted(
@@ -127,6 +136,7 @@ def associacao_fatura_exames(request, pk: int):
             "associacao": associacao,
             "linhas": linhas,
             "resumo_arbitros": resumo_arbitros,
+            "total_arbitros": len(arbitros_associacao),
             "total_geral": total_geral,
             "tem_realizacoes": bool(linhas),
         },

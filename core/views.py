@@ -23,6 +23,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from datetime import date, datetime, timedelta
 from io import BytesIO
+from urllib.parse import urlencode
 import unicodedata
 import openpyxl
 
@@ -717,6 +718,64 @@ def utilizador_toggle_ativo(request, pk: int):
     else:
         messages.success(request, f'Utilizador "{user_obj.email or user_obj.username}" desativado.')
     return redirect("core:utilizadores_dashboard")
+
+
+@login_required
+@require_POST
+def utilizadores_apagar_em_massa(request):
+    """Apaga vários utilizadores de uma vez (apenas superutilizador)."""
+    if not request.user.is_superuser:
+        raise PermissionDenied
+
+    q = (request.POST.get("q") or "").strip()
+    redirect_url = reverse("core:utilizadores_dashboard")
+    if q:
+        redirect_url = f"{redirect_url}?{urlencode({'q': q})}"
+
+    raw_ids = request.POST.getlist("user_ids")
+    if not raw_ids:
+        messages.error(request, "Selecione pelo menos um utilizador para apagar.")
+        return redirect(redirect_url)
+
+    try:
+        user_ids = {int(x) for x in raw_ids}
+    except (TypeError, ValueError):
+        messages.error(request, "Seleção inválida.")
+        return redirect(redirect_url)
+
+    user_ids.discard(request.user.pk)
+    if not user_ids:
+        messages.error(request, "Não pode apagar a sua própria conta.")
+        return redirect(redirect_url)
+
+    candidatos = list(User.objects.filter(pk__in=user_ids))
+    if not candidatos:
+        messages.error(request, "Nenhum utilizador válido selecionado.")
+        return redirect(redirect_url)
+
+    superusers_a_apagar = [u for u in candidatos if u.is_superuser]
+    if superusers_a_apagar:
+        restantes = (
+            User.objects.filter(is_superuser=True)
+            .exclude(pk__in=[u.pk for u in candidatos])
+            .count()
+        )
+        if restantes == 0:
+            messages.error(
+                request,
+                "Não é possível apagar todos os superutilizadores da plataforma.",
+            )
+            candidatos = [u for u in candidatos if not u.is_superuser]
+            if not candidatos:
+                return redirect(redirect_url)
+
+    apagados = len(candidatos)
+    User.objects.filter(pk__in=[u.pk for u in candidatos]).delete()
+    messages.success(
+        request,
+        f"{apagados} utilizador{'es' if apagados != 1 else ''} apagado{'s' if apagados != 1 else ''} com sucesso.",
+    )
+    return redirect(redirect_url)
 
 
 @login_required

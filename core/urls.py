@@ -19,6 +19,11 @@ urlpatterns = [
         views.utilizador_toggle_ativo,
         name="utilizador_toggle_ativo",
     ),
+    path(
+        "utilizadores/apagar-em-massa/",
+        views.utilizadores_apagar_em_massa,
+        name="utilizadores_apagar_em_massa",
+    ),
     path("departamentos/novo/", views.novo_departamento, name="departamento_novo"),
     path(
         "departamentos/novo/ajax/",
