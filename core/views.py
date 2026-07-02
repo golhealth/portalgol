@@ -24,7 +24,6 @@ from django.views.decorators.http import require_http_methods, require_POST
 from datetime import date, datetime, timedelta
 from io import BytesIO
 from urllib.parse import urlencode
-import unicodedata
 import openpyxl
 
 from .forms import (
@@ -46,6 +45,7 @@ from .models import (
     Modalidade,
     PerfilConta,
 )
+from .import_arbitros import importar_arbitros_worksheet
 from .password_utils import gerar_palavra_passe_segura, username_a_partir_do_email
 from .site_url import absolute_url
 from exames.forms import ExameForm
@@ -1049,36 +1049,6 @@ def epoca_associacao_add_ajax(request, pk: int):
     return JsonResponse({"ok": True, "created": created, "id": obj.pk})
 
 
-def _normalize_header(value: str) -> str:
-    """
-    Normaliza cabeçalhos do Excel:
-    - remove acentos
-    - coloca em minúsculas
-    - remove espaços extra
-    """
-    value = str(value or "").strip().lower()
-    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    value = " ".join(value.split())
-    return value
-
-
-def _parse_date_maybe(value) -> date | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date):
-        return value
-    if isinstance(value, str):
-        raw = value.strip()
-        for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%d.%m.%Y"):
-            try:
-                return datetime.strptime(raw, fmt).date()
-            except ValueError:
-                continue
-    return None
-
-
 @login_required
 @require_http_methods(["GET", "POST"])
 def epoca_associacao_import_arbitros(request, epoca_pk: int, associacao_pk: int):
@@ -1110,226 +1080,8 @@ def epoca_associacao_import_arbitros(request, epoca_pk: int, associacao_pk: int)
         raw_bytes = uploaded.read()
         wb = openpyxl.load_workbook(BytesIO(raw_bytes), data_only=True)
         ws = wb.active
-
-        # Cabeçalhos esperados (variações aceites por normalização).
-        headers = [cell.value for cell in ws[1]]
-        header_map = {}
-        for idx, h in enumerate(headers):
-            norm = _normalize_header(h)
-            if norm:
-                header_map[norm] = idx
-
-        def get_by_keys(row, keys):
-            for k in keys:
-                nk = _normalize_header(k)
-                if nk in header_map:
-                    return row[header_map[nk]]
-            return None
-
-        inserted = 0
-        updated = 0
-        skipped = 0
-        errors = []
-
-        for row_idx, row in enumerate(
-            ws.iter_rows(min_row=2, values_only=True), start=2
-        ):
-            nome_completo = get_by_keys(
-                row, ["nome completo", "nome_completo", "nome", "nome arbitro"]
-            )
-            # Fallback quando o Excel não tiver cabeçalhos compatíveis:
-            # assume a primeira coluna como nome do árbitro.
-            if not nome_completo and row and len(row) > 0:
-                nome_completo = row[0]
-
-            if not nome_completo:
-                skipped += 1
-                continue
-
-            nome_completo = str(nome_completo).strip()
-            data_nascimento = _parse_date_maybe(
-                get_by_keys(
-                    row,
-                    [
-                        "data nascimento",
-                        "data de nascimento",
-                        "data_nascimento",
-                        "nascimento",
-                    ],
-                )
-            )
-            if data_nascimento is None and row and len(row) > 1:
-                data_nascimento = _parse_date_maybe(row[1])
-
-            cpf_nif_raw = get_by_keys(row, ["cpf nif", "cpf_nif", "nif", "cpf"])
-            cpf_nif = str(cpf_nif_raw).strip() if cpf_nif_raw not in (None, "") else ""
-            cpf_nif = cpf_nif.replace(" ", "").replace(".", "").replace("-", "")
-            if not cpf_nif and row and len(row) > 2 and row[2] not in (None, ""):
-                cpf_nif = str(row[2]).strip().replace(" ", "").replace(".", "").replace("-", "")
-
-            sexo_raw = get_by_keys(row, ["sexo"])
-            sexo_raw_norm = (str(sexo_raw).strip().lower() if sexo_raw else "")
-            sexo = ""
-            if sexo_raw_norm:
-                if sexo_raw_norm.startswith("m"):
-                    sexo = "M"
-                elif sexo_raw_norm.startswith("f"):
-                    sexo = "F"
-                elif "masc" in sexo_raw_norm:
-                    sexo = "M"
-                elif "fem" in sexo_raw_norm:
-                    sexo = "F"
-            if not sexo and row and len(row) > 3 and row[3] not in (None, ""):
-                sexo_raw_norm = str(row[3]).strip().lower()
-                if sexo_raw_norm.startswith("m"):
-                    sexo = "M"
-                elif sexo_raw_norm.startswith("f"):
-                    sexo = "F"
-                elif "masc" in sexo_raw_norm:
-                    sexo = "M"
-                elif "fem" in sexo_raw_norm:
-                    sexo = "F"
-
-            telefone = get_by_keys(row, ["telemovel", "telemóvel", "telefone", "tel"])
-            email = get_by_keys(row, ["email", "e-mail"])
-            codigo_postal = get_by_keys(row, ["codigo postal", "código postal", "codigo_postal", "cp"])
-            localidade = get_by_keys(row, ["localidade"])
-            rua_avenida = get_by_keys(row, ["rua avenida", "rua/avenida", "rua / avenida", "rua_avenida"])
-            numero = get_by_keys(row, ["numero", "nº"])
-            complemento = get_by_keys(row, ["complemento"])
-            observacoes_morada = get_by_keys(row, ["observacoes", "observacoes morada", "observações", "observacoes_morada"])
-            cidade = get_by_keys(row, ["cidade"])
-
-            categoria_name = get_by_keys(row, ["categoria"])
-            modalidade_name = get_by_keys(row, ["modalidade"])
-
-            # Data do último exame (opcional)
-            data_ultimo_exame = _parse_date_maybe(
-                get_by_keys(row, ["data ultimo exame", "data do ultimo exame", "data_ultimo_exame"])
-            )
-
-            # Garante Categoria/Modalidade existentes (cria se necessário).
-            categoria_obj = None
-            if categoria_name:
-                categoria_obj, _ = Categoria.objects.get_or_create(nome=str(categoria_name).strip())
-
-            modalidade_obj = None
-            if modalidade_name:
-                modalidade_obj, _ = Modalidade.objects.get_or_create(nome=str(modalidade_name).strip())
-
-            # Deduplicação global (por CPF/NIF se existir; senão por nome+data, e por último apenas nome).
-            qs = Arbitro.objects.all()
-            if cpf_nif:
-                qs = qs.filter(cpf_nif=cpf_nif)
-            elif nome_completo and data_nascimento:
-                qs = qs.filter(nome_completo=nome_completo, data_nascimento=data_nascimento)
-            else:
-                qs = qs.filter(nome_completo=nome_completo)
-
-            arbitro = qs.order_by("pk").first()
-            try:
-                if arbitro:
-                    updates = {}
-
-                    # Nome é sempre atualizado (vindo do Excel).
-                    if arbitro.nome_completo != nome_completo:
-                        updates["nome_completo"] = nome_completo
-
-                    # Só atualiza campos opcionais se o Excel trouxer valor.
-                    if data_nascimento is not None and arbitro.data_nascimento != data_nascimento:
-                        updates["data_nascimento"] = data_nascimento
-
-                    if cpf_nif:
-                        if arbitro.cpf_nif != cpf_nif:
-                            updates["cpf_nif"] = cpf_nif
-
-                    if sexo:
-                        if arbitro.sexo != sexo:
-                            updates["sexo"] = sexo
-
-                    if email:
-                        if arbitro.email != email:
-                            updates["email"] = email
-
-                    if telefone:
-                        if arbitro.telefone != telefone:
-                            updates["telefone"] = telefone
-
-                    if codigo_postal:
-                        if arbitro.codigo_postal != codigo_postal:
-                            updates["codigo_postal"] = codigo_postal
-
-                    if localidade:
-                        if arbitro.localidade != localidade:
-                            updates["localidade"] = localidade
-
-                    if rua_avenida:
-                        if arbitro.rua_avenida != rua_avenida:
-                            updates["rua_avenida"] = rua_avenida
-
-                    if numero not in (None, ""):
-                        numero_str = str(numero).strip()
-                        if arbitro.numero != numero_str:
-                            updates["numero"] = numero_str
-
-                    if complemento:
-                        if arbitro.complemento != complemento:
-                            updates["complemento"] = complemento
-
-                    if observacoes_morada:
-                        if arbitro.observacoes_morada != observacoes_morada:
-                            updates["observacoes_morada"] = observacoes_morada
-
-                    if cidade:
-                        if arbitro.cidade != cidade:
-                            updates["cidade"] = cidade
-
-                    if categoria_obj is not None:
-                        if arbitro.categoria_id != categoria_obj.id:
-                            updates["categoria"] = categoria_obj
-
-                    if modalidade_obj is not None:
-                        if arbitro.modalidade_id != modalidade_obj.id:
-                            updates["modalidade"] = modalidade_obj
-
-                    if data_ultimo_exame is not None:
-                        if arbitro.data_ultimo_exame != data_ultimo_exame:
-                            updates["data_ultimo_exame"] = data_ultimo_exame
-
-                    # Reatribui associação à época/associação importada.
-                    if arbitro.associacao_futebol_id != associacao.id:
-                        updates["associacao_futebol"] = associacao
-
-                    if updates:
-                        for k, v in updates.items():
-                            setattr(arbitro, k, v)
-                        arbitro.save()
-                        updated += 1
-                else:
-                    arbitro = Arbitro.objects.create(
-                        nome_completo=nome_completo,
-                        data_nascimento=data_nascimento,
-                        cpf_nif=cpf_nif,
-                        sexo=sexo,
-                        email=email or "",
-                        telefone=telefone or "",
-                        codigo_postal=codigo_postal or "",
-                        localidade=localidade or "",
-                        rua_avenida=rua_avenida or "",
-                        numero=str(numero).strip() if numero not in (None, "") else "",
-                        complemento=complemento or "",
-                        observacoes_morada=observacoes_morada or "",
-                        cidade=cidade or "",
-                        categoria=categoria_obj,
-                        associacao_futebol=associacao,
-                        modalidade=modalidade_obj,
-                        data_ultimo_exame=data_ultimo_exame,
-                    )
-                    inserted += 1
-
-                EpocaArbitro.objects.get_or_create(epoca=epoca, arbitro=arbitro)
-            except Exception as exc:
-                errors.append(f"Linha {row_idx}: {exc}")
+        result = importar_arbitros_worksheet(ws, epoca=epoca, associacao=associacao)
+        wb.close()
 
         # Recalcula lista após importação.
         arbitros_da_epoca = (
@@ -1337,14 +1089,6 @@ def epoca_associacao_import_arbitros(request, epoca_pk: int, associacao_pk: int)
             .select_related("categoria", "modalidade", "associacao_futebol")
             .order_by("nome_completo")
         )
-
-        result = {
-            "inserted": inserted,
-            "updated": updated,
-            "skipped": skipped,
-            "error_count": len(errors),
-            "errors": errors[:20],
-        }
 
         context = {
             "epoca": epoca,

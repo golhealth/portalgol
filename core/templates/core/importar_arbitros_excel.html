@@ -64,8 +64,11 @@
                         </label>
                         {{ form.arquivo }}
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                            Obrigatório: coluna com o nome do árbitro (ex.: `Nome Completo`).
-                            Opcional: `Data de nascimento`, `NIF/CPF`, `Sexo`, `Categoria`, `Modalidade`, etc.
+                            Obrigatório: coluna com o nome do árbitro (ex.: `NOME`, `Nome Completo`).
+                            Opcional: `Data de Nascimento`, `NIF`, `Categoria`, `Modalidade`, `Contacto telefónico`,
+                            `Endereço de email`, `Morada`, `Concelho`, etc.
+                            Dados incompletos ou inválidos (NIF mascarado, e-mail errado, morada em falta) são importados na mesma;
+                            ficam marcados como pendências para corrigir depois.
                         </p>
                     </div>
 
@@ -86,7 +89,26 @@
                             <div>Atualizados: <span class="font-semibold">{{ result.updated }}</span></div>
                             <div>Pulados: <span class="font-semibold">{{ result.skipped }}</span></div>
                             <div>Erros: <span class="font-semibold">{{ result.error_count }}</span></div>
+                            {% if result.pendencias_count %}
+                                <div>Pendências: <span class="font-semibold text-amber-700 dark:text-amber-300">{{ result.pendencias_count }}</span></div>
+                            {% endif %}
                         </div>
+
+                        {% if result.pendencias_count %}
+                            <div class="mt-4">
+                                <p class="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-2">
+                                    Pendências a resolver (amostra)
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                    Estes árbitros foram importados, mas têm dados em falta ou inválidos. Corrija nos respetivos registos.
+                                </p>
+                                <ul class="list-disc pl-5 text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                                    {% for item in result.pendencias %}
+                                        <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
 
                         {% if result.error_count > 0 %}
                             <div class="mt-4">
